@@ -37,13 +37,14 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('input_dataset')
     parser.add_argument('output_json')
+    parser.add_argument('-t', '--transpose', default=False, action='store_true')
 
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    dataset = load_dataset(args.input_dataset)
+    dataset = load_dataset(args.input_dataset, args.transpose)
     usage_ratio = get_usage_ratio(dataset)
     split_features = split_by_ratio(usage_ratio)
     output_json(split_features, args.output_json)

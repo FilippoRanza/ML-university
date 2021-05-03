@@ -12,7 +12,7 @@ def __get_extension__(file_name):
     ext = path.suffix
     return ext
 
-def load_dataset(file_name):
+def load_dataset(file_name, transpose=False):
     reader = {
         '.csv': pd.read_csv,
         '.xlsx': pd.read_excel
@@ -22,6 +22,9 @@ def load_dataset(file_name):
         output = reader[ext](file_name)
     except KeyError:
         raise ValueError(f"Unkwnon extension: {ext}")
+
+    if transpose:
+        output = output.transpose()
 
     return output
 
