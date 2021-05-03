@@ -2,6 +2,7 @@ bin/
 include/
 lib/
 lib64
-dataset.csv
+*.csv
+*.json
 dataset.xlsx
 pyvenv.cfg
