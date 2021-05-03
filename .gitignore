@@ -6,3 +6,4 @@ lib64
 *.json
 dataset.xlsx
 pyvenv.cfg
+__pycache__/
