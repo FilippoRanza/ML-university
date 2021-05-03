@@ -7,3 +7,5 @@ lib64
 dataset.xlsx
 pyvenv.cfg
 __pycache__/
+*.png
+*.eps
