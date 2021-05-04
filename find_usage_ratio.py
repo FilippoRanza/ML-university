@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser
 import json
+import csv
 
 import numpy as np
 import pandas as pd
@@ -36,8 +37,9 @@ def output_json(data, file_name):
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('input_dataset')
-    parser.add_argument('output_json')
+    parser.add_argument('output')
     parser.add_argument('-t', '--transpose', default=False, action='store_true')
+    parser.add_argument('-g', '--group', default=True, action='store_false')
 
     return parser.parse_args()
 
@@ -46,8 +48,15 @@ def main():
     args = parse_args()
     dataset = load_dataset(args.input_dataset, args.transpose)
     usage_ratio = get_usage_ratio(dataset)
-    split_features = split_by_ratio(usage_ratio)
-    output_json(split_features, args.output_json)
+    if args.group:
+        split_features = split_by_ratio(usage_ratio)
+        output_json(split_features, args.output)
+    else:
+        with open(args.output, "w") as file:
+            writer = csv.writer(file)
+            for key, value in usage_ratio:
+                writer.writerow((key, value))
+            
 
 
 if __name__ == '__main__':
