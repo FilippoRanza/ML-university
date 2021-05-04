@@ -26,6 +26,39 @@ def find_incomplete_column(dataset, output: pd.DataFrame):
 
     output['ratio'] = tmp
 
+def get_column_stats(dataset, output: pd.DataFrame):
+    stats = {
+        'average': [],
+        'variance': [],
+        'min': [],
+        'max': [],
+        'median':[]
+    }
+
+    methods = {
+        'average': pd.DataFrame.mean,
+        'variance': pd.DataFrame.var,
+        'min': pd.DataFrame.min,
+        'max': pd.DataFrame.max,
+        'median': pd.DataFrame.median,
+    }
+
+    for key, col in dataset.items():
+        if col.dtype == np.float64 or col.dtype == np.int64:
+            for k, m in methods.items():
+                try:
+                    stats[k].append(m(col))
+                except:
+                    print(k)
+                    raise ValueError
+        else:
+            for vec in stats.values():
+                vec.append(None)
+            
+        
+
+    for k, v in stats.items():
+        output[k] = v
 
     
 def init_output_dataframe(dataset):
@@ -58,6 +91,7 @@ def main():
 
     output = init_output_dataframe(data)
     find_incomplete_column(data, output)
+    get_column_stats(data, output)
     output.to_csv(args.output_file, index=False)
 
 
