@@ -82,12 +82,14 @@ def main():
     args = parse_args()
     data = load_dataset(args.dataset)
 
-
-    patient_ids = data['Patient ID']
-    duplicates = find_duplicates(patient_ids)
-    if len(duplicates):
-        print("Duplicated Patient ID")
-        exit(1)
+    try:
+        patient_ids = data['Patient ID']
+        duplicates = find_duplicates(patient_ids)
+        if len(duplicates):
+            print("Duplicated Patient ID")
+            exit(1)
+    except:
+        pass
 
     output = init_output_dataframe(data)
     find_incomplete_column(data, output)
