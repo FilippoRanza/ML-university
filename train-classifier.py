@@ -18,25 +18,30 @@ from utils import load_dataset
 
 class DiscordFrontEnd:
     def __init__(self, url):
-        self.webhook = discord_webhook.DiscordWebhook(url=url)
+        if url:
+            self.webhook = discord_webhook.DiscordWebhook(url=url)
+        else:
+            self.webhook = None
 
     def send_message(self, msg):
-        self.webhook.content = msg
-        self.webhook.execute()
+        if self.webhook:
+            self.webhook.content = msg
+            self.webhook.execute()
 
     def send_file(self, file_name):
-        with open(archive_name, "rb") as file:
-            self.webhook.content = "Results File"
-            self.webhook.add_file(file=file.read(), filename=archive_name)
+        if self.webhook:
+            with open(archive_name, "rb") as file:
+                self.webhook.content = "Results File"
+                self.webhook.add_file(file=file.read(), filename=archive_name)
 
-        self.webhook.execute()
+            self.webhook.execute()
 
 
 parser = ArgumentParser()
 parser.add_argument("-f", "--feature-set", required=True)
 parser.add_argument("-t", "--target-set", required=True)
 parser.add_argument("-o", "--output-dir", required=True)
-parser.add_argument("-u", "--webhook-url", required=True)
+parser.add_argument("-u", "--webhook-url")
 args = parser.parse_args()
 
 discord = DiscordFrontEnd(args.webhook_url)
@@ -53,8 +58,13 @@ os.mkdir(target_dir)
 
 
 data = load_dataset(args.feature_set).values
+use_iterative = False
+if use_iterative:
+    from sklearn.experimental import enable_iterative_imputer 
+    imp = impute.IterativeImputer(max_iter=1000, initial_strategy="most_frequent", imputation_order="descending")
+else:
+    imp = impute.SimpleImputer(missing_values=np.nan, strategy="median")
 
-imp = impute.SimpleImputer(missing_values=np.nan, strategy="median")
 imp = imp.fit(data)
 
 data = imp.transform(data)
@@ -67,26 +77,27 @@ x_train, x_test, y_train, y_test = model_selection.train_test_split(data, target
 tree_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        #"splitter": ["best"],
-        #"min_samples_split": list(range(2, 5)),
-        #"max_depth": list(range(3, 21)),
-        #"min_samples_leaf": list(range(1, 5)),
-        #"max_features": [None, "auto", "sqrt", "log2"],
-        #"ccp_alpha" : np.linspace(0, 0.1, 10),
-        #"min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
+        "splitter": ["best"],
+        "min_samples_split": list(range(2, 5)),
+        "max_depth": list(range(3, 21)),
+        "min_samples_leaf": list(range(1, 5)),
+        "max_features": [None, "auto", "sqrt", "log2"],
+        "ccp_alpha" : np.linspace(0, 0.1, 10),
+        "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
     }
 ]
 
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        #"n_estimators": np.linspace(100, 1000, 10, dtype=np.int32),
-        #"bootstrap": [True, False],
-        #"min_samples_split": list(range(2, 5)),
-        #"max_depth": list(range(3, 15)),
-        #"min_samples_leaf": list(range(1, 5)),
-        #"max_features": [None, "sqrt", "log2"],
-        #"min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
+        "n_estimators": list(range(100, 1100, 100)),
+        "bootstrap": [True, False],
+        "min_samples_split": list(range(2, 5)),
+        "max_depth": list(range(3, 15)),
+        "min_samples_leaf": list(range(1, 5)),
+        "max_features": [None, "sqrt", "log2"],
+        "ccp_alpha" : np.linspace(0, 0.1, 10),
+        "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
     }
 ]
 
@@ -94,24 +105,40 @@ forest_param_grid = [
 svm_param_grid = [
     {
         "loss": ["hinge", "squared_hinge"],
-        #"dual": [True, False],
-        #"C": np.linspace(0.1, 2, 10),
-        #"tol": [1e-1, 1e-2, 1e-3],
-        #"max_iter": [30000],
-        #"multi_class": ["ovr", "crammer_singer"],
-        #"class_weight": [None, "balanced"]
+        "dual": [True, False],
+        "C": np.linspace(0.1, 2, 10),
+        "tol": [1e-1, 1e-2, 1e-3],
+        "max_iter": [40000],
+        "multi_class": ["ovr", "crammer_singer"],
+        "class_weight": [None, "balanced"]
     }
 ]
+
+extra_trees_param_grid = [
+    {
+        "criterion": ["gini", "entropy"],
+        "n_estimators": list(range(100, 1100, 100)),
+        "bootstrap": [True, False],
+        "min_samples_split": list(range(2, 5)),
+        "max_depth": list(range(3, 15)),
+        "min_samples_leaf": list(range(1, 5)),
+        "max_features": [None, "sqrt", "log2"],
+        "ccp_alpha" : np.linspace(0, 0.1, 10),
+        "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
+    }
+]
+
 
 test_classifiers = [
     ("svm", svm.LinearSVC, svm_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
     ("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
+    ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
 ]
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
-    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=10, verbose=3)
+    grid_cls = model_selection.RandomizedSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=10, verbose=3, n_iter=250)
     grid_cls.fit(x_train, y_train)
 
     estimator = os.path.join(target_dir, f"{name}-estimator.dat")
@@ -140,9 +167,20 @@ for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Done training: {name}")
 
 
+imputer = os.path.join(target_dir, "imputer.dat")
+with open(imputer, "wb") as file:
+    pickle.dump(imputer, file)
+
+with open(os.path.join(target_dir, 'dataset-info.txt'), "w") as file:
+    print(args.feature_set, file=file)
+    print(args.target_set, file=file)
+
+
 archive_name = os.path.join(args.output_dir, f"Test-{time_stamp}")
 shutil.make_archive(archive_name, 'zip', target_dir)
 
 archive_name += '.zip'
 discord.send_file(archive_name)
+
+shutil.rmtree(target_dir)
 
