@@ -1,11 +1,13 @@
 #! /usr/bin/python
 
+import datetime
+
 import pathlib
-import pandas as pd
 
 import json
 import yaml
 
+import pandas as pd
 
 def __get_extension__(file_name):
     path = pathlib.Path(file_name)
@@ -66,4 +68,9 @@ def export_data(data, file_name: str):
     else:
         __marshal_data__(data, file_name)
     
-
+def time_stamp(seconds=False):
+    now = datetime.datetime.now()
+    if seconds:
+        return now.strftime("%Y-%m-%d_%H-%M-%S")
+    else:
+        return now.strftime("%Y-%m-%d_%H-%M")
