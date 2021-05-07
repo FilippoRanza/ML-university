@@ -13,4 +13,7 @@ __pycache__/
 .vscode/
 test-results/
 *.sh
+*dat
+*.txt
+
 .ipynb_checkpoints/

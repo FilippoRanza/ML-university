@@ -1,13 +1,15 @@
 #! /usr/bin/python
 
 import datetime
-
+import shutil
 import pathlib
 
 import json
 import yaml
 
 import pandas as pd
+
+import discord_webhook
 
 def __get_extension__(file_name):
     path = pathlib.Path(file_name)
@@ -74,3 +76,39 @@ def time_stamp(seconds=False):
         return now.strftime("%Y-%m-%d_%H-%M-%S")
     else:
         return now.strftime("%Y-%m-%d_%H-%M")
+
+
+
+
+class DiscordFrontEnd:
+    def __init__(self, url):
+        if url:
+            self.webhook = discord_webhook.DiscordWebhook(url=url)
+        else:
+            self.webhook = None
+
+    def send_message(self, msg):
+        if self.webhook:
+            self.webhook.content = msg
+            self.webhook.execute()
+
+    def send_file(self, file_name):
+        if self.webhook:
+            with open(archive_name, "rb") as file:
+                self.webhook.content = "Results File"
+                self.webhook.add_file(file=file.read(), filename=archive_name)
+
+            self.webhook.execute()
+
+    def send_directory(self, dir_name):
+        if self.webhook:
+            self.__send_directory__(dir_name)
+
+
+    def __send_directory__(self, dir_name):
+        shutil.make_archive(dir_name, 'zip', dir_name)
+        archive_name = dir_name + '.zip'
+        self.send_file(archive_name)
+        shutil.rmtree(dir_name)
+
+

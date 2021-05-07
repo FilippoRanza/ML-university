@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 import pickle
 import os
+import shutil
 
 import torch
 from torch import nn, optim
@@ -10,7 +11,7 @@ from sklearn import model_selection, preprocessing, pipeline, metrics
 from skorch import NeuralNetClassifier
 import numpy as np
 
-from utils import load_dataset, time_stamp
+from utils import load_dataset, time_stamp, DiscordFrontEnd
 
 
 
@@ -42,8 +43,10 @@ class Network(nn.Module):
 parser = ArgumentParser()
 parser.add_argument("-f", "--feature-set", required=True)
 parser.add_argument("-t", "--target-set", required=True)
+parser.add_argument("-u", "--url")
 args = parser.parse_args()
 
+discord = DiscordFrontEnd(parser.url)
 
 data = load_dataset(args.feature_set).values.astype(np.float32)
 target = load_dataset(args.target_set).values.ravel().astype(np.int64)
@@ -105,4 +108,5 @@ with open(log_file, "w") as file:
         print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params), file=file)
     print(file=file)
 
-
+discord.send_message("Training Done!")
+discord.send_directory(dir_name)

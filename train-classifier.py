@@ -11,30 +11,9 @@ from sklearn import tree, impute, model_selection, ensemble, svm, metrics
 import pandas as pd
 import numpy as np
 
-import discord_webhook
 
-from utils import load_dataset
+from utils import load_dataset, DiscordFrontEnd
 
-
-class DiscordFrontEnd:
-    def __init__(self, url):
-        if url:
-            self.webhook = discord_webhook.DiscordWebhook(url=url)
-        else:
-            self.webhook = None
-
-    def send_message(self, msg):
-        if self.webhook:
-            self.webhook.content = msg
-            self.webhook.execute()
-
-    def send_file(self, file_name):
-        if self.webhook:
-            with open(archive_name, "rb") as file:
-                self.webhook.content = "Results File"
-                self.webhook.add_file(file=file.read(), filename=archive_name)
-
-            self.webhook.execute()
 
 
 parser = ArgumentParser()
