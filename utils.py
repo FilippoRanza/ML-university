@@ -94,9 +94,9 @@ class DiscordFrontEnd:
 
     def send_file(self, file_name):
         if self.webhook:
-            with open(archive_name, "rb") as file:
+            with open(file_name, "rb") as file:
                 self.webhook.content = "Results File"
-                self.webhook.add_file(file=file.read(), filename=archive_name)
+                self.webhook.add_file(file=file.read(), filename=file_name)
 
             self.webhook.execute()
 
