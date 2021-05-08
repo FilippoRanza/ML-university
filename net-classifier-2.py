@@ -38,7 +38,7 @@ class Network1(nn.Module):
 
 class Network11(nn.Module):
     def __init__(self, non_linear):
-        super(Network1, self).__init__()
+        super(Network11, self).__init__()
         self.sequential = nn.Sequential(
             nn.Linear(34, 150),
             non_linear(),
@@ -81,7 +81,7 @@ class Network3(nn.Module):
 
 class Network31(nn.Module):
     def __init__(self, non_linear):
-        super(Network3, self).__init__()
+        super(Network31, self).__init__()
         self.sequential = nn.Sequential(
             nn.Linear(34, 50),
             non_linear(),
@@ -130,12 +130,13 @@ param_grid = [
 neural_net_class = [Network1, Network11, Network3, Network31]
 non_linear = [nn.ReLU, nn.Tanh, nn.Sigmoid]
 
+
 neural_net = []
 for net_cls in neural_net_class:
     for nl_cls in non_linear:
         name = f"{net_cls.__name__}-{nl_cls.__name__}"
         inst = net_cls(nl_cls)
-        neural_net.append(inst)
+        neural_net.append((name, inst))
 
 networks = [
     (n, NeuralNetClassifier(i, device=device, iterator_train__shuffle=True))
@@ -147,7 +148,7 @@ stamp = time_stamp()
 dir_name = f"net-{stamp}"
 os.mkdir(dir_name)
 count = len(networks)
-for i, (name, net) in enumerate(networks):
+for i, (name, net) in enumerate(networks, start=1):
     discord.send_message(f"Begin training {name} {i}/{count}")
     grid_cls = model_selection.GridSearchCV(net, param_grid, cv=4, n_jobs=-1)
 
