@@ -19,15 +19,15 @@ print("Using {} device".format(device))
 
 
 class Network1(nn.Module):
-    def __init__(self):
+    def __init__(self, non_linear):
         super(Network1, self).__init__()
         self.sequential = nn.Sequential(
             nn.Linear(34, 150),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(150, 400),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(400, 70),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(70, 50),
             nn.Softmax(dim=-1),
         )
@@ -36,42 +36,63 @@ class Network1(nn.Module):
         X = self.sequential(X)
         return X
 
-
-class Network2(nn.Module):
-    def __init__(self):
-        super(Network2, self).__init__()
+class Network11(nn.Module):
+    def __init__(self, non_linear):
+        super(Network1, self).__init__()
         self.sequential = nn.Sequential(
-            nn.Linear(34, 10),
-            nn.ReLU(),
-            nn.Linear(10, 20),
-            nn.ReLU(),
-            nn.Linear(20, 20),
-            nn.ReLU(),
-            nn.Linear(20, 15),
-            nn.ReLU(),
-            nn.Linear(15, 20),
+            nn.Linear(34, 150),
+            non_linear(),
+            nn.Linear(150, 400),
+            non_linear(),
+            nn.Linear(400, 70),
+            non_linear(),
+            nn.Linear(70, 50),
             nn.Softmax(dim=-1),
         )
 
     def forward(self, X, **kwargs):
         X = self.sequential(X)
         return X
+
 
 
 class Network3(nn.Module):
-    def __init__(self):
+    def __init__(self, non_linear):
         super(Network3, self).__init__()
         self.sequential = nn.Sequential(
             nn.Linear(34, 50),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(50, 40),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(40, 70),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(70, 50),
-            nn.ReLU(),
+            non_linear(),
             nn.Linear(50, 30),
-            nn.ReLU(),
+            non_linear(),
+            nn.Linear(30, 30),
+            nn.Softmax(dim=-1),
+        )
+
+    def forward(self, X, **kwargs):
+        X = self.sequential(X)
+        return X
+
+
+class Network31(nn.Module):
+    def __init__(self, non_linear):
+        super(Network3, self).__init__()
+        self.sequential = nn.Sequential(
+            nn.Linear(34, 50),
+            non_linear(),
+            nn.Linear(50, 40),
+            non_linear(),
+            nn.Linear(40, 70),
+            non_linear(),
+            nn.Linear(70, 50),
+            non_linear(),
+            nn.Linear(50, 30),
+            non_linear(),
             nn.Linear(30, 30),
             nn.Softmax(dim=-1),
         )
@@ -101,25 +122,33 @@ param_grid = [
     {
         "max_epochs": [1000, 1500, 2000, 2500, 3000],
         "lr": [0.0045, 0.005, 0.0055, 0.006, 0.0065, 0.007],
-        "criterion": [nn.NLLLoss, nn.L1Loss, nn.CrossEntropyLoss, nn.GaussianNLLLoss],
+        "criterion": [nn.NLLLoss,  nn.CrossEntropyLoss],
         "optimizer": [optim.Adam, optim.SGD, optim.Adadelta],
     }
 ]
 
-neural_net = [Network1, Network2, Network3]
+neural_net_class = [Network1, Network11, Network3, Network31]
+non_linear = [nn.ReLU, nn.Tanh, nn.Sigmoid]
+
+neural_net = []
+for net_cls in neural_net_class:
+    for nl_cls in non_linear:
+        name = f"{net_cls.__name__}-{nl_cls.__name__}"
+        inst = net_cls(nl_cls)
+        neural_net.append(inst)
 
 networks = [
-    (n.__name__, NeuralNetClassifier(n, device=device, iterator_train__shuffle=True))
-    for n in neural_net
+    (n, NeuralNetClassifier(i, device=device, iterator_train__shuffle=True))
+    for n, i in neural_net
 ]
-
 
 
 stamp = time_stamp()
 dir_name = f"net-{stamp}"
 os.mkdir(dir_name)
-for name, net in networks:
-
+count = len(networks)
+for i, (name, net) in enumerate(networks):
+    discord.send_message(f"Begin training {name} {i}/{count}")
     grid_cls = model_selection.GridSearchCV(net, param_grid, cv=4, n_jobs=-1)
 
     grid_cls.fit(x_train, y_train)
@@ -130,6 +159,13 @@ for name, net in networks:
     print(score)
     print(res)
 
+    discord.send_message(f"Results for: {name}")
+    discord.send_message("Score")
+    discord.send_message(score)
+    discord.send_message("Result")
+    discord.send_message(res)
+
+    discord.send_message(f"Done training {name} {i}/{count}")
 
     net_file = os.path.join(dir_name, f"net-{name}.dat")
     with open(net_file, "wb") as file:
