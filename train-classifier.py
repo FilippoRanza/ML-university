@@ -47,7 +47,7 @@ tree_param_grid = [
         "criterion": ["gini", "entropy"],
         "splitter": ["best"],
         "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(3, 21)),
+        "max_depth": list(range(3, 10)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
         "ccp_alpha" : np.linspace(0, 0.1, 10),
@@ -61,10 +61,10 @@ forest_param_grid = [
         "n_estimators": list(range(100, 1100, 100)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(3, 15)),
+        "max_depth": list(range(3, 8)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "ccp_alpha" : np.linspace(0, 0.1, 10),
+        "ccp_alpha" : np.linspace(0, 0.1, 5),
         "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
     }
 ]
@@ -78,10 +78,10 @@ extra_trees_param_grid = [
         "n_estimators": list(range(100, 1100, 100)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(3, 15)),
+        "max_depth": list(range(3, 8)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "ccp_alpha" : np.linspace(0, 0.1, 10),
+        "ccp_alpha" : np.linspace(0, 0.1, 5),
         "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
     }
 ]
