@@ -7,7 +7,7 @@ import json
 import datetime
 import shutil
 
-from sklearn import tree, impute, model_selection, ensemble, svm, metrics
+from sklearn import tree, model_selection, ensemble, metrics
 import pandas as pd
 import numpy as np
 
@@ -34,19 +34,8 @@ target_dir = os.path.join(args.output_dir, f"Test-{time_stamp}")
 
 os.mkdir(target_dir)
 
-
-
 data = load_dataset(args.feature_set).values
-use_iterative = False
-if use_iterative:
-    from sklearn.experimental import enable_iterative_imputer 
-    imp = impute.IterativeImputer(max_iter=1000, initial_strategy="most_frequent", imputation_order="descending")
-else:
-    imp = impute.SimpleImputer(missing_values=np.nan, strategy="median")
 
-imp = imp.fit(data)
-
-data = imp.transform(data)
 
 target = load_dataset(args.target_set).values.ravel()
 
@@ -60,7 +49,7 @@ tree_param_grid = [
         "min_samples_split": list(range(2, 5)),
         "max_depth": list(range(3, 21)),
         "min_samples_leaf": list(range(1, 5)),
-        "max_features": [None, "auto", "sqrt", "log2"],
+        "max_features": [None, "sqrt", "log2"],
         "ccp_alpha" : np.linspace(0, 0.1, 10),
         "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
     }
@@ -81,17 +70,7 @@ forest_param_grid = [
 ]
 
 
-svm_param_grid = [
-    {
-        "loss": ["hinge", "squared_hinge"],
-        "dual": [True, False],
-        "C": np.linspace(0.1, 2, 10),
-        "tol": [1e-1, 1e-2, 1e-3],
-        "max_iter": [40000],
-        "multi_class": ["ovr", "crammer_singer"],
-        "class_weight": [None, "balanced"]
-    }
-]
+
 
 extra_trees_param_grid = [
     {
@@ -109,7 +88,6 @@ extra_trees_param_grid = [
 
 
 test_classifiers = [
-    ("svm", svm.LinearSVC, svm_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
     ("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
@@ -117,7 +95,7 @@ test_classifiers = [
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
-    grid_cls = model_selection.RandomizedSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=10, verbose=3, n_iter=250)
+    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=10, verbose=3)
     grid_cls.fit(x_train, y_train)
 
     estimator = os.path.join(target_dir, f"{name}-estimator.dat")
@@ -145,10 +123,6 @@ for name, cls_builder, param_grid in test_classifiers:
 
     discord.send_message(f"Done training: {name}")
 
-
-imputer = os.path.join(target_dir, "imputer.dat")
-with open(imputer, "wb") as file:
-    pickle.dump(imputer, file)
 
 with open(os.path.join(target_dir, 'dataset-info.txt'), "w") as file:
     print(args.feature_set, file=file)
