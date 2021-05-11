@@ -92,7 +92,7 @@ gradient_boost_param_grid = [
         "loss": ['deviance', 'exponential'],
         "learning_rate": [0.1, 0.2, 0.3],
         "n_estimators": list(range(100, 750, 50)),
-        "max_depth": [3, 4, 5, 6],
+        "max_depth": [2, 3, 4, 5, 6, 7],
         "max_features": [None, "sqrt", "log2"],
         "criterion": ['friedman_mse', 'mse'],
         "min_samples_leaf": list(range(1, 5)),
