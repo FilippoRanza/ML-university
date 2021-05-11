@@ -117,9 +117,11 @@ for name, cls_builder, param_grid in test_classifiers:
     y_pred = grid_cls.predict(x_test)
 
     report = metrics.classification_report(y_test, y_pred)
+    conf_matrix = metrics.confusion_matrix(y_test, y_pred)
     report_file = os.path.join(target_dir, f"{name}-report.txt")
     with open(report_file, "w") as file:
         print(report, file=file)
+        print(conf_matrix, file=file)
 
 
     log_file = os.path.join(target_dir, f"{name}-result.json")
