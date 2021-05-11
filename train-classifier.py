@@ -91,9 +91,9 @@ gradient_boost_param_grid = [
     {
         "loss": ['deviance', 'exponential'],
         "learning_rate": [0.1, 0.2, 0.3],
-        "n_estimators": list(range(100, 750, 50)),
-        "max_depth": [2, 3, 4, 5, 6, 7],
-        "max_features": [None, "sqrt", "log2"],
+        "n_estimators": list(range(100, 550, 50)),
+        "max_depth": [3, 4, 5],
+        "max_features": ["sqrt", "log2"],
         "criterion": ['friedman_mse', 'mse'],
         "min_samples_leaf": list(range(1, 5)),
         "min_samples_split": list(range(2, 5)),
@@ -113,7 +113,7 @@ ada_boost_param_grid = [
 
 neighbors_param_grid = [
     {
-        "n_neighbors" : list(range(5, 55, 10)),
+        "n_neighbors" : list(range(5, 115, 10)),
         "weights": ["uniform", "distance"],
         "algorithm": ["ball_tree", "kd_tree", "brute"],
     }
