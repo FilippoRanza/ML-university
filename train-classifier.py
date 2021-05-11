@@ -90,8 +90,8 @@ extra_trees_param_grid = [
 gradient_boost_param_grid = [
     {
         "loss": ['deviance', 'exponential'],
-        "learning_rate": [0.001, 0.01, 0.1],
-        "n_estimators": list(range(100, 450, 50)),
+        "learning_rate": [0.1, 0.2, 0.3],
+        "n_estimators": list(range(100, 750, 50)),
         "max_depth": [3, 4, 5, 6],
         "criterion": ['friedman_mse', 'mse'],
     }
