@@ -51,7 +51,7 @@ tree_param_grid = [
         "max_depth": list(range(5, 15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 20}, {0:1, 1: 5}, None]
+        "class_weight": ["balanced", {0: 1, 1: 2}, {0: 1, 1: 3}, {0: 1, 1: 4}, {0:1, 1: 5}, None]
     }
 ]
 
@@ -64,7 +64,7 @@ forest_param_grid = [
         "max_depth": list(range(5,  15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 20}, {0:1, 1: 5}, None]
+        "class_weight": ["balanced",  {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None]
 
     }
 ]
@@ -81,7 +81,7 @@ extra_trees_param_grid = [
         "max_depth": list(range(5, 15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 20}, {0:1, 1: 5}, None]
+        "class_weight": ["balanced", {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None]
     }
 ]
 
@@ -97,6 +97,7 @@ gradient_boost_param_grid = [
         "min_samples_leaf": list(range(1, 5)),
         "min_samples_split": list(range(2, 5)),
         "subsample": [.25, .5, .75, 1.0],
+        "tol": [1e-3, 1e-4, 1e-5]
     }
 ]
 
