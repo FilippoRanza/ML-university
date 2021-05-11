@@ -21,7 +21,7 @@ parser.add_argument("-f", "--feature-set", required=True)
 parser.add_argument("-t", "--target-set", required=True)
 parser.add_argument("-o", "--output-dir", required=True)
 parser.add_argument("-u", "--webhook-url")
-parser.add_argument("--scoring", default=False, action="score_true")
+parser.add_argument("--scoring", default=False, action="store_true")
 args = parser.parse_args()
 
 discord = DiscordFrontEnd(args.webhook_url)
