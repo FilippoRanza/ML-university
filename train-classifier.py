@@ -7,7 +7,7 @@ import json
 import datetime
 import shutil
 
-from sklearn import tree, model_selection, ensemble, metrics
+from sklearn import tree, model_selection, ensemble, metrics, neighbors
 import pandas as pd
 import numpy as np
 
@@ -111,13 +111,25 @@ ada_boost_param_grid = [
 ]
 
 
+neighbors_param_grid = [
+    {
+        "n_neighbors" : list(range(5, 55, 10)),
+        "weights": ["uniform", "distance"],
+        "algorithm": ["ball_tree", "kd_tree", "brute"],
+    }
+]
+
+
 test_classifiers = [
+    ("k-nearset-neighbors", neighbors.KNeighborsClassifierm, neighbors_param_grid),
     ("ada-boost", ensemble.AdaBoostClassifier, ada_boost_param_grid),
     ("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
     ("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
 ]
+
+
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
