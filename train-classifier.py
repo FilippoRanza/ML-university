@@ -177,6 +177,11 @@ for name, cls_builder, param_grid in test_classifiers:
         
         print(file=file)
 
+    config_log_file = os.path.join(target_dir, f"{name}-conf.json")
+    with open(config_log_file, "w") as file:
+        json.dump(param_grid, file)
+
+
 
     discord.send_message(f"Done training: {name}")
 
