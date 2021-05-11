@@ -93,7 +93,7 @@ gradient_boost_param_grid = [
         "learning_rate": [0.001, 0.01, 0.1],
         "n_estimators": list(range(100, 450, 50)),
         "max_depth": [3, 4, 5, 6],
-        "criterion": ['friedman_mse', 'mse', 'mae'],
+        "criterion": ['friedman_mse', 'mse'],
     }
 ]
 
