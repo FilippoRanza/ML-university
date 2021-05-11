@@ -97,8 +97,18 @@ gradient_boost_param_grid = [
     }
 ]
 
+ada_boost_param_grid = [
+    {
+        "n_estimators": list(range(50, 300, 25)),
+        "learning_rate": [0.1, 1.0, 2.0],
+        "algorithm": ["SAMME", "SAMME.R"]
+    }
+
+]
+
 
 test_classifiers = [
+    ("ada-boost", ensemble.AdaBoostClassifier, ada_boost_param_grid),
     ("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
     ("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
