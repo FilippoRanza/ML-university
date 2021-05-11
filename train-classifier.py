@@ -51,7 +51,7 @@ tree_param_grid = [
         "max_depth": list(range(5, 15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", None]
+        "class_weight": ["balanced" {0: 1, 1: 20}, {0:1, 1: 5}, None]
     }
 ]
 
@@ -64,7 +64,7 @@ forest_param_grid = [
         "max_depth": list(range(5,  15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", None]
+        "class_weight": ["balanced" {0: 1, 1: 20}, {0:1, 1: 5}, None]
 
     }
 ]
@@ -81,7 +81,7 @@ extra_trees_param_grid = [
         "max_depth": list(range(5, 15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", None]
+        "class_weight": ["balanced" {0: 1, 1: 20}, {0:1, 1: 5}, None]
     }
 ]
 
@@ -189,7 +189,8 @@ for name, cls_builder, param_grid in test_classifiers:
 with open(os.path.join(target_dir, 'dataset-info.txt'), "w") as file:
     print(args.feature_set, file=file)
     print(args.target_set, file=file)
-
+    if args.scoring:
+        print("using f1 score", file=file)
 
 archive_name = os.path.join(args.output_dir, f"Test-{time_stamp}")
 shutil.make_archive(archive_name, 'zip', target_dir)
