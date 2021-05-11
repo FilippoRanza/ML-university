@@ -47,25 +47,25 @@ tree_param_grid = [
         "criterion": ["gini", "entropy"],
         "splitter": ["best"],
         "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(3, 10)),
+        "max_depth": list(range(5, 10)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "ccp_alpha" : np.linspace(0, 0.1, 10),
-        "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
+        "ccp_alpha" : [0],
+        "min_weight_fraction_leaf": [0],
     }
 ]
 
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 600, 100)),
+        "n_estimators": list(range(100, 500, 100)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(3, 8)),
+        "max_depth": list(range(5,  10)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "ccp_alpha" : np.linspace(0, 0.1, 5),
-        "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
+        "ccp_alpha" : [0],
+        "min_weight_fraction_leaf": [0],
     }
 ]
 
@@ -75,14 +75,14 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 600, 100)),
+        "n_estimators": list(range(100, 500, 100)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(3, 8)),
+        "max_depth": list(range(5, 10)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "ccp_alpha" : np.linspace(0, 0.1, 5),
-        "min_weight_fraction_leaf": np.linspace(0, 0.5, 5),
+        "ccp_alpha" : [0],
+        "min_weight_fraction_leaf": [0],
     }
 ]
 
@@ -95,7 +95,7 @@ test_classifiers = [
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
-    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=10, verbose=3)
+    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=3, verbose=3)
     grid_cls.fit(x_train, y_train)
 
     estimator = os.path.join(target_dir, f"{name}-estimator.dat")
@@ -120,6 +120,24 @@ for name, cls_builder, param_grid in test_classifiers:
     }
     with open(log_file, "w") as file:
         json.dump(test_results, file)
+
+
+    log_file = os.path.join(target_dir, f"{name}-log.txt")
+    with open(log_file, "w") as file:
+        print("Grid Search statistics:", file=file)
+        means = grid_cls.cv_results_["mean_test_score"]
+        stds = grid_cls.cv_results_["std_test_score"]
+        values = []
+        for mean, std, params in zip(means, stds, grid_cls.cv_results_["params"]):
+            values.append((mean, std, params))
+
+        values.sort(key=lambda  x: -x[0])
+
+        for mean, std, params in values:
+            print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params), file=file)
+        
+        print(file=file)
+
 
     discord.send_message(f"Done training: {name}")
 
