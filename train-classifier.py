@@ -21,6 +21,7 @@ parser.add_argument("-f", "--feature-set", required=True)
 parser.add_argument("-t", "--target-set", required=True)
 parser.add_argument("-o", "--output-dir", required=True)
 parser.add_argument("-u", "--webhook-url")
+parser.add_argument("--scoring", default=False, action="score_true")
 args = parser.parse_args()
 
 discord = DiscordFrontEnd(args.webhook_url)
@@ -127,11 +128,11 @@ test_classifiers = [
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
 ]
 
-
+scoring = "f1" if args.scoring else None
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
-    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=3, verbose=3)
+    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=3, verbose=3, scoring=scoring)
     grid_cls.fit(x_train, y_train)
 
     estimator = os.path.join(target_dir, f"{name}-estimator.dat")
