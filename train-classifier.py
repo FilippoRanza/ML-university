@@ -93,14 +93,18 @@ gradient_boost_param_grid = [
         "learning_rate": [0.1, 0.2, 0.3],
         "n_estimators": list(range(100, 750, 50)),
         "max_depth": [3, 4, 5, 6],
+        "max_features": [None, "sqrt", "log2"],
         "criterion": ['friedman_mse', 'mse'],
+        "min_samples_leaf": list(range(1, 5)),
+        "min_samples_split": list(range(2, 5)),
+        "subsample": [.25, .5, .75, 1.0],
     }
 ]
 
 ada_boost_param_grid = [
     {
         "n_estimators": list(range(50, 300, 25)),
-        "learning_rate": [0.1, 1.0, 2.0],
+        "learning_rate": [0.5, 1.0, 1.5],
         "algorithm": ["SAMME", "SAMME.R"]
     }
 
