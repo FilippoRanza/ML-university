@@ -58,7 +58,7 @@ tree_param_grid = [
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 500, 100)),
+        "n_estimators": list(range(100, 450, 50)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 5)),
         "max_depth": list(range(5,  15)),
@@ -75,7 +75,7 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 500, 100)),
+        "n_estimators": list(range(100, 450, 50)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 5)),
         "max_depth": list(range(5, 15)),
