@@ -167,9 +167,32 @@ def triple_loss(y_true, y_pred):
     err = int(np.sum(err))
     return err
 
+def precision_loss(y_true, y_pred):
+    false_positive = 0
+    false_negative = 0
+    positive = 0
+    negative = 0
+    for t, p in zip(y_true, y_pred):
+        if t:
+            positive += 1
+        else:
+            negative += 1
+        
+        if t != p:
+            if t:
+                false_negative += 1
+            else:
+                false_positive += 1
+
+    positive_score = false_positive / positive
+    negative_score = false_negative / negative
+    return positive_score + negative_score
+
+
 loss_functions = {
     'scale': scale_loss,
     'triple':triple_loss,
+    'precision': precision_loss,
 }
 
 if args.scoring:
@@ -247,6 +270,8 @@ with open(os.path.join(target_dir, 'dataset-info.txt'), "w") as file:
     print(args.target_set, file=file)
     if args.scoring:
         print("using f1 score", file=file)
+    if args.loss:
+        print(f"using {args.loss} loss", file=file)
 
 archive_name = os.path.join(args.output_dir, f"Test-{time_stamp}")
 shutil.make_archive(archive_name, 'zip', target_dir)
