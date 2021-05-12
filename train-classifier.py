@@ -17,12 +17,21 @@ from utils import load_dataset, DiscordFrontEnd
 
 
 parser = ArgumentParser()
-parser.add_argument("-f", "--feature-set", required=True)
-parser.add_argument("-t", "--target-set", required=True)
+parser.add_argument("-f", "--feature-set", required=True, nargs='+')
+parser.add_argument("-t", "--target-set", required=True, nargs='+')
 parser.add_argument("-o", "--output-dir", required=True)
 parser.add_argument("-u", "--webhook-url")
 parser.add_argument("--scoring", default=False, action="store_true")
 args = parser.parse_args()
+
+if len(args.feature_set) != len(args.target_set):
+    print("--feature-set and --target-set require always the same number of arguments")
+    exit(1)
+
+if len(args.feature_set) > 2:
+    print("--feature-set and --target-set takes 1 or 2 arguments")
+    exit(1)
+
 
 discord = DiscordFrontEnd(args.webhook_url)
 
@@ -35,12 +44,20 @@ target_dir = os.path.join(args.output_dir, f"Test-{time_stamp}")
 
 os.mkdir(target_dir)
 
-data = load_dataset(args.feature_set).values
 
-
-target = load_dataset(args.target_set).values.ravel()
-
-x_train, x_test, y_train, y_test = model_selection.train_test_split(data, target, test_size=0.25)
+if len(args.feature_set) == 2:
+    train_feature, test_feature = args.feature_set
+    train_target, test_target = args.target_set
+    x_train = load_dataset(train_feature).values
+    x_test = load_dataset(test_feature).values
+    y_train = load_dataset(train_target).values.ravel()
+    y_test = load_dataset(test_target).values.ravel()
+else:
+    feature_set, = args.feature_set
+    target_set, = args.target_set
+    data = load_dataset(feature_set).values
+    target = load_dataset(target_set).values.ravel()
+    x_train, x_test, y_train, y_test = model_selection.train_test_split(data, target, test_size=0.25)
 
 
 tree_param_grid = [
@@ -51,7 +68,8 @@ tree_param_grid = [
         "max_depth": list(range(5, 15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 2}, {0: 1, 1: 3}, {0: 1, 1: 4}, {0:1, 1: 5}, None]
+        "class_weight": ["balanced", {0: 1, 1: 2}, {0: 1, 1: 3}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
+        "random_state": [42]
     }
 ]
 
@@ -64,8 +82,8 @@ forest_param_grid = [
         "max_depth": list(range(5,  15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced",  {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None]
-
+        "class_weight": ["balanced",  {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
+        "random_state": [42]
     }
 ]
 
@@ -81,7 +99,8 @@ extra_trees_param_grid = [
         "max_depth": list(range(5, 15)),
         "min_samples_leaf": list(range(1, 5)),
         "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None]
+        "class_weight": ["balanced", {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
+        "random_state": [42]
     }
 ]
 
@@ -97,7 +116,8 @@ gradient_boost_param_grid = [
         "min_samples_leaf": list(range(1, 5)),
         "min_samples_split": list(range(2, 5)),
         "subsample": [.25, .5, .75, 1.0],
-        "tol": [1e-3, 1e-4, 1e-5]
+        "tol": [1e-3, 1e-4, 1e-5],
+        "random_state": [42]
     }
 ]
 
@@ -105,7 +125,8 @@ ada_boost_param_grid = [
     {
         "n_estimators": list(range(50, 300, 25)),
         "learning_rate": [0.5, 1.0, 1.5],
-        "algorithm": ["SAMME", "SAMME.R"]
+        "algorithm": ["SAMME", "SAMME.R"],
+        "random_state": [42]
     }
 
 ]
@@ -116,6 +137,7 @@ neighbors_param_grid = [
         "n_neighbors" : list(range(5, 115, 10)),
         "weights": ["uniform", "distance"],
         "algorithm": ["ball_tree", "kd_tree", "brute"],
+        "random_state": [42]
     }
 ]
 
