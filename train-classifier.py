@@ -139,7 +139,6 @@ neighbors_param_grid = [
         "n_neighbors" : list(range(5, 115, 10)),
         "weights": ["uniform", "distance"],
         "algorithm": ["ball_tree", "kd_tree", "brute"],
-        "random_state": [42]
     }
 ]   
 
