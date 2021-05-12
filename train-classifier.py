@@ -21,7 +21,9 @@ parser.add_argument("-f", "--feature-set", required=True, nargs='+')
 parser.add_argument("-t", "--target-set", required=True, nargs='+')
 parser.add_argument("-o", "--output-dir", required=True)
 parser.add_argument("-u", "--webhook-url")
-parser.add_argument("--scoring", default=False, action="store_true")
+mutex_group = parser.add_mutually_exclusive_group()
+mutex_group.add_argument("--scoring", default=False, action="store_true")
+mutex_group.add_argument("--loss", default=False, action="store_true")
 args = parser.parse_args()
 
 if len(args.feature_set) != len(args.target_set):
@@ -76,14 +78,14 @@ tree_param_grid = [
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 450, 50)),
-        "bootstrap": [True, False],
-        "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(5,  15)),
-        "min_samples_leaf": list(range(1, 5)),
-        "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced",  {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
-        "random_state": [42]
+        #"n_estimators": list(range(100, 450, 50)),
+        #"bootstrap": [True, False],
+        #"min_samples_split": list(range(2, 5)),
+        #"max_depth": list(range(5,  15)),
+        #"min_samples_leaf": list(range(1, 5)),
+        #"max_features": [None, "sqrt", "log2"],
+        #"class_weight": ["balanced",  {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
+        #"random_state": [42]
     }
 ]
 
@@ -93,14 +95,14 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 450, 50)),
-        "bootstrap": [True, False],
-        "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(5, 15)),
-        "min_samples_leaf": list(range(1, 5)),
-        "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
-        "random_state": [42]
+        #"n_estimators": list(range(100, 450, 50)),
+        #"bootstrap": [True, False],
+        #"min_samples_split": list(range(2, 5)),
+        #"max_depth": list(range(5, 15)),
+        #"min_samples_leaf": list(range(1, 5)),
+        #"max_features": [None, "sqrt", "log2"],
+        #"class_weight": ["balanced", {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
+        #"random_state": [42]
     }
 ]
 
@@ -108,16 +110,16 @@ extra_trees_param_grid = [
 gradient_boost_param_grid = [
     {
         "loss": ['deviance', 'exponential'],
-        "learning_rate": [0.1, 0.2, 0.3],
-        "n_estimators": list(range(100, 550, 50)),
-        "max_depth": [3, 4, 5],
-        "max_features": ["sqrt", "log2"],
-        "criterion": ['friedman_mse', 'mse'],
-        "min_samples_leaf": list(range(1, 5)),
-        "min_samples_split": list(range(2, 5)),
-        "subsample": [.25, .5, .75, 1.0],
-        "tol": [1e-3, 1e-4, 1e-5],
-        "random_state": [42]
+        #"learning_rate": [0.1, 0.2, 0.3],
+        #"n_estimators": list(range(100, 550, 50)),
+        #"max_depth": [3, 4, 5],
+        #"max_features": ["sqrt", "log2"],
+        #"criterion": ['friedman_mse', 'mse'],
+        #"min_samples_leaf": list(range(1, 5)),
+        #"min_samples_split": list(range(2, 5)),
+        #"subsample": [.25, .5, .75, 1.0],
+        #"tol": [1e-3, 1e-4, 1e-5],
+        #"random_state": [42]
     }
 ]
 
@@ -151,7 +153,21 @@ test_classifiers = [
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
 ]
 
-scoring = "f1" if args.scoring else None
+def custom_loss(y_true, y_pred):
+    scale_y_pred = 2 * y_pred
+    scale_y_true = 2 * y_true
+    err = np.abs(scale_y_pred - scale_y_true)
+    err = np.sum(err)
+    err = int(err)
+    return err
+
+if args.scoring:
+    scoring = "f1"
+elif args.loss:
+    scoring = metrics.make_scorer(custom_loss, greater_is_better=False)
+else:
+    scoring = None
+
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
