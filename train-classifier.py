@@ -23,7 +23,7 @@ parser.add_argument("-o", "--output-dir", required=True)
 parser.add_argument("-u", "--webhook-url")
 mutex_group = parser.add_mutually_exclusive_group()
 mutex_group.add_argument("--scoring", default=False, action="store_true")
-mutex_group.add_argument("--loss", default=False, action="store_true")
+mutex_group.add_argument("--loss", default=None)
 args = parser.parse_args()
 
 if len(args.feature_set) != len(args.target_set):
@@ -78,14 +78,14 @@ tree_param_grid = [
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        #"n_estimators": list(range(100, 450, 50)),
-        #"bootstrap": [True, False],
-        #"min_samples_split": list(range(2, 5)),
-        #"max_depth": list(range(5,  15)),
-        #"min_samples_leaf": list(range(1, 5)),
-        #"max_features": [None, "sqrt", "log2"],
-        #"class_weight": ["balanced",  {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
-        #"random_state": [42]
+        "n_estimators": list(range(100, 450, 50)),
+        "bootstrap": [True, False],
+        "min_samples_split": list(range(2, 5)),
+        "max_depth": list(range(5,  15)),
+        "min_samples_leaf": list(range(1, 5)),
+        "max_features": [None, "sqrt", "log2"],
+        "class_weight": ["balanced", None],
+        "random_state": [42]
     }
 ]
 
@@ -95,14 +95,14 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        #"n_estimators": list(range(100, 450, 50)),
-        #"bootstrap": [True, False],
-        #"min_samples_split": list(range(2, 5)),
-        #"max_depth": list(range(5, 15)),
-        #"min_samples_leaf": list(range(1, 5)),
-        #"max_features": [None, "sqrt", "log2"],
-        #"class_weight": ["balanced", {0: 1, 1: 6}, {0: 1, 1: 4}, {0:1, 1: 5}, None],
-        #"random_state": [42]
+        "n_estimators": list(range(100, 450, 50)),
+        "bootstrap": [True, False],
+        "min_samples_split": list(range(2, 5)),
+        "max_depth": list(range(5, 15)),
+        "min_samples_leaf": list(range(1, 5)),
+        "max_features": [None, "sqrt", "log2"],
+        "class_weight": ["balanced", None],
+        "random_state": [42]
     }
 ]
 
@@ -110,16 +110,16 @@ extra_trees_param_grid = [
 gradient_boost_param_grid = [
     {
         "loss": ['deviance', 'exponential'],
-        #"learning_rate": [0.1, 0.2, 0.3],
-        #"n_estimators": list(range(100, 550, 50)),
-        #"max_depth": [3, 4, 5],
-        #"max_features": ["sqrt", "log2"],
-        #"criterion": ['friedman_mse', 'mse'],
-        #"min_samples_leaf": list(range(1, 5)),
-        #"min_samples_split": list(range(2, 5)),
-        #"subsample": [.25, .5, .75, 1.0],
-        #"tol": [1e-3, 1e-4, 1e-5],
-        #"random_state": [42]
+        "learning_rate": [0.1, 0.2, 0.3],
+        "n_estimators": list(range(100, 550, 50)),
+        "max_depth": [3, 4, 5],
+        "max_features": ["sqrt", "log2"],
+        "criterion": ['friedman_mse', 'mse'],
+        "min_samples_leaf": list(range(1, 5)),
+        "min_samples_split": list(range(2, 5)),
+        "subsample": [.25, .5, .75, 1.0],
+        "tol": [1e-3, 1e-4, 1e-5],
+        "random_state": [42]
     }
 ]
 
@@ -141,7 +141,7 @@ neighbors_param_grid = [
         "algorithm": ["ball_tree", "kd_tree", "brute"],
         "random_state": [42]
     }
-]
+]   
 
 
 test_classifiers = [
@@ -153,7 +153,7 @@ test_classifiers = [
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
 ]
 
-def custom_loss(y_true, y_pred):
+def scale_loss(y_true, y_pred):
     scale_y_pred = 2 * y_pred
     scale_y_true = 2 * y_true
     err = np.abs(scale_y_pred - scale_y_true)
@@ -161,10 +161,27 @@ def custom_loss(y_true, y_pred):
     err = int(err)
     return err
 
+def triple_loss(y_true, y_pred):
+    err = y_true - y_pred
+    err = (err != 0) * 2 + err
+    err = int(np.sum(err))
+    return err
+
+loss_functions = {
+    'scale': scale_loss,
+    'triple':triple_loss,
+}
+
 if args.scoring:
     scoring = "f1"
 elif args.loss:
-    scoring = metrics.make_scorer(custom_loss, greater_is_better=False)
+    try:
+        loss = loss_functions[args.loss]
+        scoring = metrics.make_scorer(loss, greater_is_better=False)
+    except KeyError:
+        print(f"unknown loss function: {args.loss}")
+        print("try with", loss_functions.keys())
+        exit(1)
 else:
     scoring = None
 
