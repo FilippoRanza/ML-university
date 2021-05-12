@@ -78,13 +78,13 @@ tree_param_grid = [
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 450, 50)),
+        "n_estimators": list(range(50, 450, 50)),
         "bootstrap": [True, False],
-        "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(5,  15)),
-        "min_samples_leaf": list(range(1, 5)),
-        "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", None],
+        "min_samples_split": list(range(2, 7)),
+        "max_depth": list(range(3,  10)),
+        "min_samples_leaf": list(range(1, 3)),
+        "max_features": ["sqrt", "log2"],
+        "class_weight": ["balanced"],
         "random_state": [42]
     }
 ]
@@ -95,13 +95,13 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(100, 450, 50)),
+        "n_estimators": list(range(50, 450, 50)),
         "bootstrap": [True, False],
-        "min_samples_split": list(range(2, 5)),
-        "max_depth": list(range(5, 15)),
-        "min_samples_leaf": list(range(1, 5)),
-        "max_features": [None, "sqrt", "log2"],
-        "class_weight": ["balanced", None],
+        "min_samples_split": list(range(2, 7)),
+        "max_depth": list(range(8, 18)),
+        "min_samples_leaf": list(range(1, 3)),
+        "max_features": [None],
+        "class_weight": [None],
         "random_state": [42]
     }
 ]
@@ -110,15 +110,15 @@ extra_trees_param_grid = [
 gradient_boost_param_grid = [
     {
         "loss": ['deviance', 'exponential'],
-        "learning_rate": [0.1, 0.2, 0.3],
-        "n_estimators": list(range(100, 550, 50)),
-        "max_depth": [3, 4, 5],
+        "learning_rate": [0.05, 0.1],
+        "n_estimators": list(range(300, 550, 50)),
+        "max_depth": [3, 4],
         "max_features": ["sqrt", "log2"],
         "criterion": ['friedman_mse', 'mse'],
         "min_samples_leaf": list(range(1, 5)),
         "min_samples_split": list(range(2, 5)),
-        "subsample": [.25, .5, .75, 1.0],
-        "tol": [1e-3, 1e-4, 1e-5],
+        "subsample": [.5, .75, 1.0],
+        "tol": [1e-2, 1e-3, 1e-4, 1e-5],
         "random_state": [42]
     }
 ]
