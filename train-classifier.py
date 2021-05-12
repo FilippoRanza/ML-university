@@ -184,8 +184,8 @@ def precision_loss(y_true, y_pred):
             else:
                 false_positive += 1
 
-    positive_score = false_positive / positive
-    negative_score = false_negative / negative
+    positive_score = (false_positive / positive) * negative
+    negative_score = (false_negative / negative) * positive
     return positive_score + negative_score
 
 
