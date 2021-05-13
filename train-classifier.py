@@ -101,8 +101,8 @@ extra_trees_param_grid = [
         "min_samples_split": list(range(2, 7)),
         "max_depth": list(range(8, 18)),
         "min_samples_leaf": list(range(1, 3)),
-        "max_features": [None, {0: 1, 1: 10}],
-        "class_weight": [None],
+        "max_features": [None],
+        "class_weight": [None, {0: 1, 1: 10}],
         "random_state": [42]
     }
 ]
