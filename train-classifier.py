@@ -84,7 +84,7 @@ forest_param_grid = [
         "max_depth": list(range(3,  10)),
         "min_samples_leaf": list(range(1, 3)),
         "max_features": ["sqrt", "log2"],
-        "class_weight": ["balanced"],
+        "class_weight": ["balanced", {0: 1, 1: 10}],
         "random_state": [42]
     }
 ]
@@ -100,7 +100,7 @@ extra_trees_param_grid = [
         "min_samples_split": list(range(2, 7)),
         "max_depth": list(range(8, 18)),
         "min_samples_leaf": list(range(1, 3)),
-        "max_features": [None],
+        "max_features": [None, {0: 1, 1: 10}],
         "class_weight": [None],
         "random_state": [42]
     }
