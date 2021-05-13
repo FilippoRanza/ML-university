@@ -144,9 +144,9 @@ neighbors_param_grid = [
 
 
 test_classifiers = [
-    ("k-nearset-neighbors", neighbors.KNeighborsClassifier, neighbors_param_grid),
-    ("ada-boost", ensemble.AdaBoostClassifier, ada_boost_param_grid),
-    ("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
+    #("k-nearset-neighbors", neighbors.KNeighborsClassifier, neighbors_param_grid),
+    #("ada-boost", ensemble.AdaBoostClassifier, ada_boost_param_grid),
+    #("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
     ("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
