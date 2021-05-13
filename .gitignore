@@ -15,5 +15,5 @@ test-results/
 *.sh
 *dat
 *.txt
-
+*.db
 .ipynb_checkpoints/
