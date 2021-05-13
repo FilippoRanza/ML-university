@@ -79,13 +79,13 @@ tree_param_grid = [
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(50, 450, 50)),
+        "n_estimators": list(range(700, 4500, 50)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 7)),
-        "max_depth": list(range(3,  10)),
+        "max_depth": list(range(3,  18)),
         "min_samples_leaf": list(range(1, 3)),
         "max_features": ["sqrt", "log2"],
-        "class_weight": ["balanced", {0: 1, 1: 10}, {0: 1, 1: 100}],
+        "class_weight": [None, "balanced"],
         "random_state": [42]
     }
 ]
@@ -96,13 +96,13 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(50, 450, 50)),
+        "n_estimators": list(range(700, 4500, 50)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 7)),
-        "max_depth": list(range(8, 18)),
+        "max_depth": list(range(3, 18)),
         "min_samples_leaf": list(range(1, 3)),
         "max_features": [None],
-        "class_weight": [None, {0: 1, 1: 10}, {0: 1, 1: 100}],
+        "class_weight": [None, "balanced"],
         "random_state": [42]
     }
 ]
@@ -149,7 +149,7 @@ test_classifiers = [
     #("ada-boost", ensemble.AdaBoostClassifier, ada_boost_param_grid),
     #("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
-    ("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
+    #("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
 ]
 
