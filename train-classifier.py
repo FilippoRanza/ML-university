@@ -24,6 +24,7 @@ parser.add_argument("-u", "--webhook-url")
 mutex_group = parser.add_mutually_exclusive_group()
 mutex_group.add_argument("--scoring", default=False, action="store_true")
 mutex_group.add_argument("--loss", default=None)
+mutex_group.add_argument("--auroc", default=False, action="store_true")
 args = parser.parse_args()
 
 if len(args.feature_set) != len(args.target_set):
@@ -196,6 +197,8 @@ loss_functions = {
 
 if args.scoring:
     scoring = "f1"
+elif args.auroc:
+    scoring = "roc_auc"
 elif args.loss:
     try:
         loss = loss_functions[args.loss]
