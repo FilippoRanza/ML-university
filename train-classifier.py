@@ -12,8 +12,7 @@ import pandas as pd
 import numpy as np
 
 
-from utils import load_dataset, DiscordFrontEnd
-
+from utils import load_dataset, DiscordFrontEnd, time_stamp
 
 
 parser = ArgumentParser()
@@ -42,8 +41,8 @@ if not os.path.isdir(args.output_dir):
     os.mkdir(args.output_dir)
 
 now = datetime.datetime.now()
-time_stamp = now.strftime("%Y-%m-%d_%H-%M")
-target_dir = os.path.join(args.output_dir, f"Test-{time_stamp}")
+ts = time_stamp()
+target_dir = os.path.join(args.output_dir, f"Test-{ts}")
 
 os.mkdir(target_dir)
 
@@ -213,7 +212,7 @@ else:
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
-    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=3, verbose=3, scoring=scoring)
+    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=1, cv=3, verbose=3, scoring=scoring)
     grid_cls.fit(x_train, y_train)
 
     estimator = os.path.join(target_dir, f"{name}-estimator.dat")
@@ -275,7 +274,7 @@ with open(os.path.join(target_dir, 'dataset-info.txt'), "w") as file:
     if args.loss:
         print(f"using {args.loss} loss", file=file)
 
-archive_name = os.path.join(args.output_dir, f"Test-{time_stamp}")
+archive_name = os.path.join(args.output_dir, f"Test-{ts}")
 shutil.make_archive(archive_name, 'zip', target_dir)
 
 archive_name += '.zip'
