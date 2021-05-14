@@ -8,7 +8,9 @@ we here use a small subset of it.
 
 """
 
+from argparse import ArgumentParser
 import os
+import shutil
 
 import torch
 import torch.nn as nn
@@ -23,28 +25,43 @@ from optuna.trial import TrialState
 
 import numpy as np
 
-from utils import load_dataset, time_stamp
+import yaml
+
+from utils import load_dataset, time_stamp, DiscordFrontEnd
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 DEVICE = torch.device(device)
-BATCHSIZE = 64
-CLASSES = 2
 DIR = os.getcwd()
-MIN_EPOCHS = 10
-MAX_EPOCHS = 100
-LOG_INTERVAL = 10
 
-FEATURES = 33
+def get_mandatory_config_param(conf: dict, key: str):
+    try:
+        output = conf[key]
+    except KeyError:
+        raise ValueError(f"Missing configuration parameter {key}")
+    return output
 
-DB_FILE = 'sqlite:///optuna_study.db'
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('config_file')
+    args = parser.parse_args()
+    with open(args.config_file) as file:
+        data = yaml.safe_load(file)
 
-TRAIN_FEATURE = "train-covid-core-impute-no-age.csv"
-TRAIN_TARGET = "train-covid-target-set.csv"
-
-TEST_FEATURE = "test-covid-core-impute-no-age.csv"
-TEST_TARGET = "test-covid-target-set.csv"
-
+    BATCHSIZE = data.get("BATCHSIZE", 64)
+    CLASSES = get_mandatory_config_param(data, "CLASSES")
+    MIN_EPOCHS = data.get("MIN_EPOCHS", 10)
+    MAX_EPOCHS = data.get("MAX_EPOCHS", 100)
+    LOG_INTERVAL = data.get("LOG_INTERVAL", 10)
+    FEATURES = get_mandatory_config_param(data, "FEATURES")  
+    DB_FILE = data.get("DB_FILE", 'sqlite:///optuna_study.db')
+    TRAIN_FEATURE = get_mandatory_config_param(data, "TRAIN_FEATURE") 
+    TRAIN_TARGET = get_mandatory_config_param(data, "TRAIN_TARGET") 
+    TEST_FEATURE = get_mandatory_config_param(data, "TEST_FEATURE") 
+    TEST_TARGET = get_mandatory_config_param(data, "TEST_TARGET") 
+    N_TRIALS = data.get("N_TRIALS", 10)
+    DISCORD_URL = data.get("DISCORD_URL", None)
+    discord = DiscordFrontEnd(DISCORD_URL)
 
 
 def load_datasets(features, target):
@@ -92,7 +109,7 @@ def get_score(model):
 
 def define_model(trial):
     # We optimize the number of layers, hidden units and dropout ratio in each layer.
-    n_layers = trial.suggest_int("n_layers", 1, 12)
+    n_layers = trial.suggest_int("n_layers", 1, 15)
     layers = []
 
     in_features = FEATURES
@@ -124,8 +141,8 @@ class Objective:
 
         # Generate the optimizers.
 
-        optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD", "Adadelta"])
-        lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+        optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD", "Adadelta", "LBFGS", "Rprop"])
+        lr = trial.suggest_float("lr", 1e-6, 1e-1, log=True)
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
         train_loader, valid_loader = get_dataset()
@@ -174,18 +191,22 @@ class Objective:
 
 
 if __name__ == "__main__":
-
-   
+    discord.send_message("Start OPTUNA study")
     study = optuna.create_study(direction="maximize", study_name="classify infection", storage=DB_FILE, load_if_exists=True)
     
     obj = Objective()
-    study.optimize(obj.objective, n_trials=7500)
+    study.optimize(obj.objective, n_trials=N_TRIALS)
+    discord.send_message(f"Done {N_TRIALS} trials")
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
 
+    dir_name = f"optuna-optim-{time_stamp()}"
+    os.mkdir(dir_name)
+
     log_file_name = f"net-log_{time_stamp()}.txt"
-    with open(log_file_name, "w") as file:
+    log_file_path = os.path.join(dir_name, log_file_name)
+    with open(log_file_path, "w") as file:
         print("Study statistics: ", file=file)
         print("  Number of finished trials: ", len(study.trials), file=file)
         print("  Number of pruned trials: ", len(pruned_trials), file=file)
@@ -204,7 +225,11 @@ if __name__ == "__main__":
             repo = get_score(model)
             print(repo, file=file)
             file_name = f"net-model_{time_stamp()}.dat"
-            with open(file_name, "wb") as file:
+            model_file_path = os.path.join(dir_name, file_name)
+            with open(model_file_path, "wb") as file:
                 torch.save(model, file)
         else:
             print("Best is from a previous run", file=file)
+    config_file_store = os.path.join(dir_name, "config.yml")
+    shutil.copy(args.config_file, config_file_store)
+    discord.send_directory(dir_name)
