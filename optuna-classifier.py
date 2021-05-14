@@ -54,7 +54,7 @@ if __name__ == '__main__':
     MAX_EPOCHS = data.get("MAX_EPOCHS", 100)
     LOG_INTERVAL = data.get("LOG_INTERVAL", 10)
     FEATURES = get_mandatory_config_param(data, "FEATURES")  
-    DB_FILE = data.get("DB_FILE", 'sqlite:///optuna_study.db')
+    DB_FILE = data.get("DB_FILE", None)
     TRAIN_FEATURE = get_mandatory_config_param(data, "TRAIN_FEATURE") 
     TRAIN_TARGET = get_mandatory_config_param(data, "TRAIN_TARGET") 
     TEST_FEATURE = get_mandatory_config_param(data, "TEST_FEATURE") 
