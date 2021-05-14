@@ -141,7 +141,7 @@ class Objective:
 
         # Generate the optimizers.
 
-        optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD", "Adadelta", "LBFGS", "Rprop"])
+        optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD", "Adadelta",  "Rprop"])
         lr = trial.suggest_float("lr", 1e-6, 1e-1, log=True)
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
