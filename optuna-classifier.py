@@ -179,30 +179,32 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize", study_name="classify infection", storage=DB_FILE, load_if_exists=True)
     
     obj = Objective()
-    study.optimize(obj.objective, n_trials=100, timeout=600)
+    study.optimize(obj.objective, n_trials=7500)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
 
-    print("Study statistics: ")
-    print("  Number of finished trials: ", len(study.trials))
-    print("  Number of pruned trials: ", len(pruned_trials))
-    print("  Number of complete trials: ", len(complete_trials))
+    log_file_name = f"net-log_{time_stamp()}.txt"
+    with open(log_file_name, "w") as file:
+        print("Study statistics: ", file=file)
+        print("  Number of finished trials: ", len(study.trials), file=file)
+        print("  Number of pruned trials: ", len(pruned_trials), file=file)
+        print("  Number of complete trials: ", len(complete_trials), file=file)
 
-    print("Best trial:")
-    trial = study.best_trial
+        print("Best trial:", file=file)
+        trial = study.best_trial
 
-    print("  Value: ", trial.value)
-    print("  Number: ", trial.number)
-    print("  Params: ")
-    for key, value in trial.params.items():
-        print("    {}: {}".format(key, value))
+        print("  Value: ", trial.value, file=file)
+        print("  Number: ", trial.number, file=file)
+        print("  Params: ", file=file)
+        for key, value in trial.params.items():
+            print("    {}: {}".format(key, value), file=file)
 
-    if model := obj.get_best(trial.number):
-        repo = get_score(model)
-        print(repo)
-        file_name = f"net-model_{time_stamp()}.dat"
-        with open(file_name, "wb") as file:
-            torch.save(repo, file)
-    else:
-        print("Best is from a previous run")
+        if model := obj.get_best(trial.number):
+            repo = get_score(model)
+            print(repo, file=file)
+            file_name = f"net-model_{time_stamp()}.dat"
+            with open(file_name, "wb") as file:
+                torch.save(repo, file)
+        else:
+            print("Best is from a previous run", file=file)
