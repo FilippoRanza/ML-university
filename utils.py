@@ -71,14 +71,14 @@ def export_data(data, file_name: str):
     else:
         __marshal_data__(data, file_name)
     
-def time_stamp(seconds=False, uuid=True):
+def time_stamp(seconds=False, uid=True):
     now = datetime.datetime.now()
     if seconds:
         output = now.strftime("%Y-%m-%d_%H-%M-%S")
     else:
         output = now.strftime("%Y-%m-%d_%H-%M")
 
-    if uuid:
+    if uid:
         uid = uuid.uuid4()
         uid = str(uid)
         output = f"{output}_{uid}"
