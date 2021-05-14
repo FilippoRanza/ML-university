@@ -3,6 +3,7 @@
 import datetime
 import shutil
 import pathlib
+import uuid
 
 import json
 import yaml
@@ -70,12 +71,18 @@ def export_data(data, file_name: str):
     else:
         __marshal_data__(data, file_name)
     
-def time_stamp(seconds=False):
+def time_stamp(seconds=False, uuid=True):
     now = datetime.datetime.now()
     if seconds:
-        return now.strftime("%Y-%m-%d_%H-%M-%S")
+        output = now.strftime("%Y-%m-%d_%H-%M-%S")
     else:
-        return now.strftime("%Y-%m-%d_%H-%M")
+        output = now.strftime("%Y-%m-%d_%H-%M")
+
+    if uuid:
+        uid = uuid.uuid4()
+        uid = str(uid)
+        output = f"{output}_{uid}"
+    return output
 
 
 
