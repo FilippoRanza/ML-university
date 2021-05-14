@@ -205,6 +205,6 @@ if __name__ == "__main__":
             print(repo, file=file)
             file_name = f"net-model_{time_stamp()}.dat"
             with open(file_name, "wb") as file:
-                torch.save(repo, file)
+                torch.save(model, file)
         else:
             print("Best is from a previous run", file=file)
