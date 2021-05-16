@@ -132,7 +132,7 @@ class Objective:
             if a > accuracy:
                 accuracy = a
                 trial = k
-                model = m            
+                model = m
         return (trial, model)
 
     def objective(self, trial):
@@ -225,7 +225,7 @@ if __name__ == "__main__":
         for key, value in trial.params.items():
             print("    {}: {}".format(key, value), file=file)
 
-        trial, model = obj.get_best():
+        trial, model = obj.get_best()
         repo = get_score(model)
         print(f"Local Best Number: {trial}", file=file)
         print(repo, file=file)
