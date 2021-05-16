@@ -124,9 +124,16 @@ class Objective:
     def __init__(self):
         self.models = {}
 
-    def get_best(self, trial_number):
-
-        return self.models.get(trial_number)
+    def get_best(self):
+        trial = 0
+        accuracy = 0
+        model = None
+        for k, (m, a) in self.models.items():
+            if a > accuracy:
+                accuracy = a
+                trial = k
+                model = m            
+        return (trial, model)
 
     def objective(self, trial):
 
@@ -173,7 +180,7 @@ class Objective:
             accuracy = correct / len(valid_loader.dataset)
 
             trial.report(accuracy, epoch)
-            self.models[trial.number] = model
+            self.models[trial.number] = (model, accuracy)
 
             # Handle pruning based on the intermediate value.
             if trial.should_prune():
@@ -213,20 +220,20 @@ if __name__ == "__main__":
         trial = study.best_trial
 
         print("  Value: ", trial.value, file=file)
-        print("  Number: ", trial.number, file=file)
+        print("  Global Best Number: ", trial.number, file=file)
         print("  Params: ", file=file)
         for key, value in trial.params.items():
             print("    {}: {}".format(key, value), file=file)
 
-        if model := obj.get_best(trial.number):
-            repo = get_score(model)
-            print(repo, file=file)
-            file_name = f"net-model_{time_stamp()}.dat"
-            model_file_path = os.path.join(dir_name, file_name)
-            with open(model_file_path, "wb") as file:
-                torch.save(model, file)
-        else:
-            print("Best is from a previous run", file=file)
+        trial, model = obj.get_best():
+        repo = get_score(model)
+        print(f"Local Best Number: {trial}", file=file)
+        print(repo, file=file)
+        file_name = f"net-model_{time_stamp()}.dat"
+        model_file_path = os.path.join(dir_name, file_name)
+        with open(model_file_path, "wb") as file:
+            torch.save(model, file)
+
     config_file_store = os.path.join(dir_name, "config.yml")
     shutil.copy(args.config_file, config_file_store)
     discord.send_directory(dir_name)
