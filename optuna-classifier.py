@@ -1,13 +1,3 @@
-"""
-Optuna example that optimizes multi-layer perceptrons using PyTorch.
-
-In this example, we optimize the validation accuracy of hand-written digit recognition using
-PyTorch and FashionMNIST. We optimize the neural network architecture as well as the optimizer
-configuration. As it is too time consuming to use the whole FashionMNIST dataset,
-we here use a small subset of it.
-
-"""
-
 from argparse import ArgumentParser
 import os
 import shutil
@@ -34,6 +24,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 DEVICE = torch.device(device)
 DIR = os.getcwd()
 
+
 def get_mandatory_config_param(conf: dict, key: str):
     try:
         output = conf[key]
@@ -41,9 +32,10 @@ def get_mandatory_config_param(conf: dict, key: str):
         raise ValueError(f"Missing configuration parameter {key}")
     return output
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument('config_file')
+    parser.add_argument("config_file")
     args = parser.parse_args()
     with open(args.config_file) as file:
         data = yaml.safe_load(file)
@@ -53,14 +45,15 @@ if __name__ == '__main__':
     MIN_EPOCHS = data.get("MIN_EPOCHS", 10)
     MAX_EPOCHS = data.get("MAX_EPOCHS", 100)
     LOG_INTERVAL = data.get("LOG_INTERVAL", 10)
-    FEATURES = get_mandatory_config_param(data, "FEATURES")  
+    FEATURES = get_mandatory_config_param(data, "FEATURES")
     DB_FILE = data.get("DB_FILE", None)
-    TRAIN_FEATURE = get_mandatory_config_param(data, "TRAIN_FEATURE") 
-    TRAIN_TARGET = get_mandatory_config_param(data, "TRAIN_TARGET") 
-    TEST_FEATURE = get_mandatory_config_param(data, "TEST_FEATURE") 
-    TEST_TARGET = get_mandatory_config_param(data, "TEST_TARGET") 
+    TRAIN_FEATURE = get_mandatory_config_param(data, "TRAIN_FEATURE")
+    TRAIN_TARGET = get_mandatory_config_param(data, "TRAIN_TARGET")
+    TEST_FEATURE = get_mandatory_config_param(data, "TEST_FEATURE")
+    TEST_TARGET = get_mandatory_config_param(data, "TEST_TARGET")
     N_TRIALS = data.get("N_TRIALS", 10)
     DISCORD_URL = data.get("DISCORD_URL", None)
+    STUDY_NAME = get_mandatory_config_param(data, "STUDY_NAME")
     discord = DiscordFrontEnd(DISCORD_URL)
 
 
@@ -68,6 +61,7 @@ def load_datasets(features, target):
     x = load_dataset(features).values.astype(np.float32)
     y = load_dataset(target).values.ravel().astype(np.int64)
     return x, y
+
 
 class CustomDataset(Dataset):
     def __init__(self, features, target):
@@ -79,12 +73,12 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         x = self.x[idx]
         y = self.y[idx]
-        
+
         return x, y
 
 
 def get_dataset():
-    train_set = CustomDataset(TRAIN_FEATURE,TRAIN_TARGET) 
+    train_set = CustomDataset(TRAIN_FEATURE, TRAIN_TARGET)
     train_loader = DataLoader(train_set, batch_size=BATCHSIZE, shuffle=True)
     test_set = CustomDataset(TEST_FEATURE, TEST_TARGET)
     test_loader = DataLoader(test_set, batch_size=BATCHSIZE, shuffle=True)
@@ -106,7 +100,6 @@ def get_score(model):
     return repo
 
 
-
 def define_model(trial):
     # We optimize the number of layers, hidden units and dropout ratio in each layer.
     n_layers = trial.suggest_int("n_layers", 1, 15)
@@ -126,6 +119,7 @@ def define_model(trial):
 
     return nn.Sequential(*layers)
 
+
 class Objective:
     def __init__(self):
         self.models = {}
@@ -141,12 +135,13 @@ class Objective:
 
         # Generate the optimizers.
 
-        optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD", "Adadelta",  "Rprop"])
+        optimizer_name = trial.suggest_categorical(
+            "optimizer", ["Adam", "RMSprop", "SGD", "Adadelta", "Rprop"]
+        )
         lr = trial.suggest_float("lr", 1e-6, 1e-1, log=True)
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
         train_loader, valid_loader = get_dataset()
-
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
@@ -187,13 +182,15 @@ class Objective:
         return accuracy
 
 
-
-
-
 if __name__ == "__main__":
     discord.send_message("Start OPTUNA study")
-    study = optuna.create_study(direction="maximize", study_name="classify infection", storage=DB_FILE, load_if_exists=True)
-    
+    study = optuna.create_study(
+        direction="maximize",
+        study_name=STUDY_NAME,
+        storage=DB_FILE,
+        load_if_exists=True,
+    )
+
     obj = Objective()
     study.optimize(obj.objective, n_trials=N_TRIALS)
     discord.send_message(f"Done {N_TRIALS} trials")
