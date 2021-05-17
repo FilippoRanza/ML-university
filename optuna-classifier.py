@@ -185,19 +185,14 @@ class Objective:
         compute_propotional_weight.add_loader(train_loader)
         compute_propotional_weight.add_loader(valid_loader)
         proportional_weights = compute_propotional_weight.get_weights()
+        proportional_weights = torch.from_numpy(proportional_weights)
+        proportional_weights = proportional_weights.to(DEVICE)
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
-        weights = trial.suggest_categorical("weights", [
-            None, 
-            "proportional"
-        ])     
+   
 
-        if weights:
-            weights = {
-                'proportional': proportional_weights,
-            }[weights]
-            weights = torch.from_numpy(weights).to(DEVICE)
+
 
         loss_function_name = trial.suggest_categorical("loss function", ["nll_loss", "cross_entropy"])
         loss_function = getattr(F, loss_function_name)
@@ -212,7 +207,7 @@ class Objective:
 
                 optimizer.zero_grad()
                 output = model(data)
-                loss = loss_function(output, target)
+                loss = loss_function(output, target, weight=proportional_weights)
                 loss.backward()
                 optimizer.step()
 
