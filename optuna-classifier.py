@@ -119,6 +119,10 @@ def define_model(trial):
 
     return nn.Sequential(*layers)
 
+def suggest_weights(trial, count):
+    weights = [trial.suggest_float(f"weight_{i}", 0.5, 100) for i in range(count)]
+    weights = np.array(weights, dtype=np.float32)
+    return torch.from_numpy(weights)
 
 class Objective:
     def __init__(self):
@@ -152,6 +156,9 @@ class Objective:
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
+        weights = suggest_weights(trial, CLASSES) 
+        weights = weights.to(DEVICE)       
+
         # Training of the model.
         for epoch in range(epochs):
             model.train()
@@ -161,7 +168,7 @@ class Objective:
 
                 optimizer.zero_grad()
                 output = model(data)
-                loss = F.nll_loss(output, target)
+                loss = F.cross_entropy(output, target, weight=weights)
                 loss.backward()
                 optimizer.step()
 
