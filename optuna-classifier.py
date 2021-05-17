@@ -102,12 +102,12 @@ def get_score(model):
 
 def define_model(trial):
     # We optimize the number of layers, hidden units and dropout ratio in each layer.
-    n_layers = trial.suggest_int("n_layers", 1, 15)
+    n_layers = trial.suggest_int("n_layers", 1, 25)
     layers = []
 
     in_features = FEATURES
     for i in range(n_layers):
-        out_features = trial.suggest_int("n_units_l{}".format(i), 4, 128)
+        out_features = trial.suggest_int("n_units_l{}".format(i), 4, 192)
         layers.append(nn.Linear(in_features, out_features))
         layers.append(nn.ReLU())
         p = trial.suggest_float("dropout_l{}".format(i), 0.2, 0.75)
