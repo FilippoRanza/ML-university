@@ -122,8 +122,36 @@ def define_model(trial):
 def suggest_weights(trial, count):
     weights = [trial.suggest_float(f"weight_{i}", 0.5, 100) for i in range(count)]
     weights = np.array(weights, dtype=np.float32)
-    return torch.from_numpy(weights)
+    return weights
 
+
+class ComputeProportionaWeight:
+    def __init__(self):
+        self.targets = {}
+
+    def add_loader(self, loader):
+        for _, targets in loader:
+            for t in targets.numpy():
+                self.add_value(t)
+    
+    def add_value(self, v):
+        try:
+            self.targets[v] += 1
+        except KeyError:
+            self.targets[v] = 1
+    
+    def get_weights(self):
+        total = 0
+        for v in self.targets.values():
+            total += v
+        output = np.zeros(len(self.targets), dtype=np.float32)
+        for k, v in self.targets.items():
+            output[k] = 1 - (v / total)
+       
+        return output
+
+
+ 
 class Objective:
     def __init__(self):
         self.models = {}
@@ -153,11 +181,27 @@ class Objective:
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
         train_loader, valid_loader = get_dataset()
+        compute_propotional_weight = ComputeProportionaWeight()
+        compute_propotional_weight.add_loader(train_loader)
+        compute_propotional_weight.add_loader(valid_loader)
+        proportional_weights = compute_propotional_weight.get_weights()
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
-        weights = suggest_weights(trial, CLASSES) 
-        weights = weights.to(DEVICE)       
+        weights = trial.suggest_categorical("weights", [
+            None, 
+            "proportional"
+        ])     
+
+        if weights:
+            weights = {
+                'proportional': proportional_weights,
+            }[weights]
+            weights = torch.from_numpy(weights).to(DEVICE)
+
+        loss_function_name = trial.suggest_categorical("loss function", ["nll_loss", "cross_entropy"])
+        loss_function = getattr(F, loss_function_name)
+
 
         # Training of the model.
         for epoch in range(epochs):
@@ -168,7 +212,7 @@ class Objective:
 
                 optimizer.zero_grad()
                 output = model(data)
-                loss = F.cross_entropy(output, target, weight=weights)
+                loss = loss_function(output, target)
                 loss.backward()
                 optimizer.step()
 
