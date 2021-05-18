@@ -196,9 +196,10 @@ class Objective:
         #    weight = proportional_weights
 
 
-        weight = suggest_weights(trial, CLASSES)
-        weight = torch.from_numpy(weight)
-        weight = weight.to(DEVICE)
+        #weight = suggest_weights(trial, CLASSES)
+        #weight = torch.from_numpy(weight)
+        #weight = weight.to(DEVICE)
+        weight = None
 
         loss_function_name = trial.suggest_categorical("loss function", ["nll_loss", "cross_entropy"])
         loss_function = getattr(F, loss_function_name)
