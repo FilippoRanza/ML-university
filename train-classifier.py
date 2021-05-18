@@ -78,10 +78,10 @@ tree_param_grid = [
 forest_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(700, 4500, 50)),
+        "n_estimators": list(range(50, 450, 50)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 7)),
-        "max_depth": list(range(3,  18)),
+        "max_depth": list(range(3,  12)),
         "min_samples_leaf": list(range(1, 3)),
         "max_features": ["sqrt", "log2"],
         "class_weight": [None, "balanced"],
@@ -95,10 +95,10 @@ forest_param_grid = [
 extra_trees_param_grid = [
     {
         "criterion": ["gini", "entropy"],
-        "n_estimators": list(range(700, 4500, 50)),
+        "n_estimators": list(range(50, 450, 50)),
         "bootstrap": [True, False],
         "min_samples_split": list(range(2, 7)),
-        "max_depth": list(range(3, 18)),
+        "max_depth": list(range(3, 12)),
         "min_samples_leaf": list(range(1, 3)),
         "max_features": [None],
         "class_weight": [None, "balanced"],
@@ -111,7 +111,7 @@ gradient_boost_param_grid = [
     {
         "loss": ['deviance', 'exponential'],
         "learning_rate": [0.05, 0.1],
-        "n_estimators": list(range(300, 550, 50)),
+        "n_estimators": list(range(50, 450, 50)),
         "max_depth": [3, 4],
         "max_features": ["sqrt", "log2"],
         "criterion": ['friedman_mse', 'mse'],
@@ -146,7 +146,7 @@ neighbors_param_grid = [
 test_classifiers = [
     #("k-nearset-neighbors", neighbors.KNeighborsClassifier, neighbors_param_grid),
     #("ada-boost", ensemble.AdaBoostClassifier, ada_boost_param_grid),
-    #("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
+    ("gradient-boost", ensemble.GradientBoostingClassifier, gradient_boost_param_grid),
     ("random-forest", ensemble.RandomForestClassifier, forest_param_grid),
     #("decision-tree", tree.DecisionTreeClassifier, tree_param_grid),
     ("extra-tree", ensemble.ExtraTreesClassifier, extra_trees_param_grid)
@@ -212,7 +212,7 @@ else:
 
 for name, cls_builder, param_grid in test_classifiers:
     discord.send_message(f"Start training: {name}")
-    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=1, cv=3, verbose=3, scoring=scoring)
+    grid_cls = model_selection.GridSearchCV(cls_builder(), param_grid, n_jobs=-1, cv=3, verbose=3, scoring=scoring)
     grid_cls.fit(x_train, y_train)
 
     estimator = os.path.join(target_dir, f"{name}-estimator.dat")
