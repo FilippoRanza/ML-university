@@ -190,7 +190,9 @@ class Objective:
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
-   
+        weight = trial.suggest_categorical("weights", [None, "prop"])
+        if weight:
+            weight = proportional_weights
 
 
 
@@ -207,24 +209,26 @@ class Objective:
 
                 optimizer.zero_grad()
                 output = model(data)
-                loss = loss_function(output, target, weight=proportional_weights)
+                loss = loss_function(output, target, weight=weight)
                 loss.backward()
                 optimizer.step()
 
             # Validation of the model.
             model.eval()
-            correct = 0
+            target_values = np.zeros(0)
+            result_values = np.zeros(0)
             with torch.no_grad():
                 for batch_idx, (data, target) in enumerate(valid_loader):
-
-                    data, target = data.to(DEVICE), target.to(DEVICE)
+                    target_values = np.concatenate((target_values, target.numpy()))
+                    data = data.to(DEVICE)
                     output = model(data)
                     # Get the index of the max log-probability.
                     pred = output.argmax(dim=1, keepdim=True)
-                    correct += pred.eq(target.view_as(pred)).sum().item()
+                    pred = pred.cpu().numpy()
+                    result_values = np.concatenate((result_values, pred[:, 0]))
+                   
 
-            accuracy = correct / len(valid_loader.dataset)
-
+            accuracy = metrics.balanced_accuracy_score(target_values, result_values)
             trial.report(accuracy, epoch)
             self.models[trial.number] = (model, accuracy)
 
