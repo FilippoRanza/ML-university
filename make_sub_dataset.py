@@ -50,6 +50,16 @@ def make_target_set(orig_dataset: pd.DataFrame, new_dataset: pd.DataFrame, targe
         output[col_key] = target
     return output
  
+def filter_column_by_value(dataset: pd.DataFrame, values: list):
+    for val in values:
+        col, val = val.split(',')
+        val = float(val)
+        col = dataset[col]
+        indxs = col.index[col == val].to_list()
+        dataset = dataset.drop(indxs)
+
+    return dataset
+
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('-d', '--dataset', required=True)
@@ -60,6 +70,7 @@ def parse_args():
     parser.add_argument('-o', '--output', required=True)
     parser.add_argument('-t', '--target')
     parser.add_argument('-c', '--target-column', nargs='+', type=int)
+    parser.add_argument('-f', '--filter-col-by-value', nargs='+')
     return parser.parse_args()
 
 
@@ -71,6 +82,8 @@ def main():
     new_dataset = make_new_dataset(orig_dataset, ratio, args.min_ratio, args.ignore_list)
     new_dataset = filter_empty_items(new_dataset, args.min_ur)
     new_dataset = filter_all_equal(new_dataset)
+    if args.filter_col_by_value:
+        new_dataset = filter_column_by_value(new_dataset, args.filter_col_by_value)
     export_data(new_dataset, args.output)
     if args.target:
         target_set = make_target_set(orig_dataset, new_dataset, args.target_column)
