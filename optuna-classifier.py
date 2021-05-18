@@ -109,9 +109,10 @@ def define_model(trial):
     for i in range(n_layers):
         out_features = trial.suggest_int("n_units_l{}".format(i), 4, 192)
         layers.append(nn.Linear(in_features, out_features))
-        layers.append(nn.ReLU())
-        p = trial.suggest_float("dropout_l{}".format(i), 0.2, 0.75)
-        layers.append(nn.Dropout(p))
+        nn_linear_name = trial.suggest_categorical(f"non_linear-{i}", ["ReLU", "LogSigmoid", "Sigmoid", "Tanh",  ])
+        nn_linear = getattr(nn, nn_linear_name)
+        layers.append(nn_linear())
+        
 
         in_features = out_features
     layers.append(nn.Linear(in_features, CLASSES))
