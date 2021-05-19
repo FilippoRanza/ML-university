@@ -109,16 +109,24 @@ def define_model(trial):
     for i in range(n_layers):
         out_features = trial.suggest_int("n_units_l{}".format(i), 4, 192)
         layers.append(nn.Linear(in_features, out_features))
-        nn_linear_name = trial.suggest_categorical(f"non_linear-{i}", ["ReLU", "LogSigmoid", "Sigmoid", "Tanh",  ])
+        nn_linear_name = trial.suggest_categorical(
+            f"non_linear-{i}",
+            [
+                "ReLU",
+                "LogSigmoid",
+                "Sigmoid",
+                "Tanh",
+            ],
+        )
         nn_linear = getattr(nn, nn_linear_name)
         layers.append(nn_linear())
-        
 
         in_features = out_features
     layers.append(nn.Linear(in_features, CLASSES))
     layers.append(nn.LogSoftmax(dim=1))
 
     return nn.Sequential(*layers)
+
 
 def suggest_weights(trial, count):
     weights = [trial.suggest_float(f"weight_{i}", 0.5, 100) for i in range(count)]
@@ -134,13 +142,13 @@ class ComputeProportionaWeight:
         for _, targets in loader:
             for t in targets.numpy():
                 self.add_value(t)
-    
+
     def add_value(self, v):
         try:
             self.targets[v] += 1
         except KeyError:
             self.targets[v] = 1
-    
+
     def get_weights(self):
         total = 0
         for v in self.targets.values():
@@ -148,11 +156,10 @@ class ComputeProportionaWeight:
         output = np.zeros(len(self.targets), dtype=np.float32)
         for k, v in self.targets.items():
             output[k] = 1 - (v / total)
-       
+
         return output
 
 
- 
 class Objective:
     def __init__(self):
         self.models = {}
@@ -182,28 +189,23 @@ class Objective:
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
 
         train_loader, valid_loader = get_dataset()
-        #compute_propotional_weight = ComputeProportionaWeight()
-        #compute_propotional_weight.add_loader(train_loader)
-        #compute_propotional_weight.add_loader(valid_loader)
-        #proportional_weights = compute_propotional_weight.get_weights()
-        #proportional_weights = torch.from_numpy(proportional_weights)
-        #proportional_weights = proportional_weights.to(DEVICE)
+        compute_propotional_weight = ComputeProportionaWeight()
+        compute_propotional_weight.add_loader(train_loader)
+        compute_propotional_weight.add_loader(valid_loader)
+        proportional_weights = compute_propotional_weight.get_weights()
+        proportional_weights = torch.from_numpy(proportional_weights)
+        proportional_weights = proportional_weights.to(DEVICE)
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
-        #weight = trial.suggest_categorical("weights", [None, "prop"])
-        #if weight:
-        #    weight = proportional_weights
+        weight = trial.suggest_categorical("weights", [None, "inverse"])
+        if weight:
+            weight = proportional_weights
 
-
-        #weight = suggest_weights(trial, CLASSES)
-        #weight = torch.from_numpy(weight)
-        #weight = weight.to(DEVICE)
-        weight = None
-
-        loss_function_name = trial.suggest_categorical("loss function", ["nll_loss", "cross_entropy"])
+        loss_function_name = trial.suggest_categorical(
+            "loss function", ["nll_loss", "cross_entropy"]
+        )
         loss_function = getattr(F, loss_function_name)
-
 
         # Training of the model.
         for epoch in range(epochs):
@@ -231,7 +233,6 @@ class Objective:
                     pred = output.argmax(dim=1, keepdim=True)
                     pred = pred.cpu().numpy()
                     result_values = np.concatenate((result_values, pred[:, 0]))
-                   
 
             accuracy = metrics.balanced_accuracy_score(target_values, result_values)
             trial.report(accuracy, epoch)
