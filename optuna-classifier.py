@@ -97,7 +97,14 @@ def get_score(model):
     y_pred = y_pred.argmax(axis=1)
 
     repo = metrics.classification_report(y_true, y_pred)
-    return repo
+    conf_mat = metrics.confusion_matrix(y_true, y_pred)
+    hinge = metrics.hinge_loss(y_true, y_pred)
+    auc = metrics.roc_auc_score(y_true, y_pred)
+    b_acc = metrics.balanced_accuracy_score(y_true, y_pred)
+
+    result = f"Report:\n{repo}\nConfusion Matrix:\n{conf_mat}\nHinge Loss: {hinge}\nROC AUC: {auc}\nBalanced Accuracy: {b_acc}\n"
+
+    return result
 
 
 def define_model(trial):
