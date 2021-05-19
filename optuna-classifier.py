@@ -54,6 +54,7 @@ if __name__ == "__main__":
     N_TRIALS = data.get("N_TRIALS", 10)
     DISCORD_URL = data.get("DISCORD_URL", None)
     STUDY_NAME = get_mandatory_config_param(data, "STUDY_NAME")
+    BALANCED = data.get("BALANCED_ACCURACY", False)
     discord = DiscordFrontEnd(DISCORD_URL)
 
 
@@ -139,6 +140,33 @@ def suggest_weights(trial, count):
     weights = [trial.suggest_float(f"weight_{i}", 0.5, 100) for i in range(count)]
     weights = np.array(weights, dtype=np.float32)
     return weights
+
+
+class AccuracyScore:
+    def __init__(self):
+        self.count = 0
+
+    def get_accuracy(self, item_count):
+        return self.count / item_count
+    
+    def add_score(self, y_true, y_pred):
+        pred = y_pred.argmax(dim=1, keepdim=True)
+        self.count += pred.eq(y_true.view_as(pred)).sum().item()
+
+class BalancedAccuracyScore:
+    def __init__(self):
+        self.target_values = np.zeros(0)
+        self.result_values = np.zeros(0)
+
+    def get_accuracy(self, _item_count):
+        metrics.balanced_accuracy_score(self.target_values, self.result_values)
+
+    def add_score(self, y_true, y_pred):
+        pred = output.argmax(dim=1, keepdim=True)
+        pred = pred.cpu().numpy()
+        self.target_values = np.concatenate((self.target_values, y_true.numpy()))
+        self.result_values = np.concatenate((self.result_values, pred[:, 0]))
+
 
 
 class ComputeProportionaWeight:
@@ -229,19 +257,19 @@ class Objective:
 
             # Validation of the model.
             model.eval()
-            target_values = np.zeros(0)
-            result_values = np.zeros(0)
+            if BALANCED:
+                acc_score = BalancedAccuracyScore()
+            else:
+                acc_score = AccuracyScore()
+                
             with torch.no_grad():
                 for batch_idx, (data, target) in enumerate(valid_loader):
-                    target_values = np.concatenate((target_values, target.numpy()))
                     data = data.to(DEVICE)
                     output = model(data)
-                    # Get the index of the max log-probability.
-                    pred = output.argmax(dim=1, keepdim=True)
-                    pred = pred.cpu().numpy()
-                    result_values = np.concatenate((result_values, pred[:, 0]))
+                    acc_score.add_score(target, output)
 
-            accuracy = metrics.balanced_accuracy_score(target_values, result_values)
+            accuracy = acc_score.get_accuracy(len(valid_loader.dataset))
+
             trial.report(accuracy, epoch)
             self.models[trial.number] = (model, accuracy)
 
