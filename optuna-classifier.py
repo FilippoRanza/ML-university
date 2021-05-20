@@ -160,7 +160,7 @@ class BalancedAccuracyScore:
         self.result_values = np.zeros(0)
 
     def get_accuracy(self, _item_count):
-        metrics.balanced_accuracy_score(self.target_values, self.result_values)
+        return metrics.balanced_accuracy_score(self.target_values, self.result_values)
 
     def add_score(self, y_true, y_pred):
         pred = y_pred.argmax(dim=1, keepdim=True)
