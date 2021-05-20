@@ -87,7 +87,7 @@ def get_dataset():
     return train_loader, test_loader
 
 
-def get_score(model):
+def get_test_result(model):
     cpu_dev = torch.device("cpu")
     model.to(cpu_dev)
     model.eval()
@@ -97,7 +97,11 @@ def get_score(model):
         y_pred = model(x)
     y_pred = y_pred.numpy()
     y_pred = y_pred.argmax(axis=1)
+    return y_true, y_pred
 
+
+def get_score(model):
+    y_true, y_pred = get_test_result(model)
     repo = metrics.classification_report(y_true, y_pred)
     conf_mat = metrics.confusion_matrix(y_true, y_pred)
     hinge = metrics.hinge_loss(y_true, y_pred)
@@ -149,10 +153,11 @@ class AccuracyScore:
 
     def get_accuracy(self, item_count):
         return self.count / item_count
-    
+
     def add_score(self, y_true, y_pred):
         pred = y_pred.argmax(dim=1, keepdim=True)
         self.count += pred.eq(y_true.view_as(pred)).sum().item()
+
 
 class BalancedAccuracyScore:
     def __init__(self):
@@ -167,7 +172,6 @@ class BalancedAccuracyScore:
         pred = pred.cpu().numpy()
         self.target_values = np.concatenate((self.target_values, y_true.numpy()))
         self.result_values = np.concatenate((self.result_values, pred[:, 0]))
-
 
 
 class ComputeProportionaWeight:
@@ -212,6 +216,17 @@ class Objective:
                 model = m
         return (trial, model)
 
+    def automatic_weights(self):
+        best = self.get_best()
+        y_true, y_pred = get_test_result(best)
+        conf_mat = metrics.confusion_matrix(y_true, y_pred)
+        output = np.zeros(len(conf_mat))
+        for i, row in enumerate(conf_mat):
+            den = np.sum(row)
+            output[i] = 1 - (row[i] / den)
+        print(output)
+        return torch.from_numpy(output)
+
     def objective(self, trial):
 
         # Generate the model.
@@ -236,9 +251,14 @@ class Objective:
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
         if self.weights:
-            weight = trial.suggest_categorical("weights", [None, "inverse"])
+            weight = trial.suggest_categorical(
+                "weights", [None, "inverse", "automatic"]
+            )
             if weight:
-                weight = proportional_weights
+                weight = {
+                    "inverse": proportional_weights,
+                    "automatic": self.automatic_weights(),
+                }[weight]
         else:
             weight = None
 
@@ -266,7 +286,7 @@ class Objective:
                 acc_score = BalancedAccuracyScore()
             else:
                 acc_score = AccuracyScore()
-                
+
             with torch.no_grad():
                 for batch_idx, (data, target) in enumerate(valid_loader):
                     data = data.to(DEVICE)
