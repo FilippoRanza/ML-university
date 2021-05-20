@@ -16,4 +16,5 @@ test-results/
 *dat
 *.txt
 *.db
+*.zip
 .ipynb_checkpoints/
