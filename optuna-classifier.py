@@ -163,7 +163,7 @@ class BalancedAccuracyScore:
         metrics.balanced_accuracy_score(self.target_values, self.result_values)
 
     def add_score(self, y_true, y_pred):
-        pred = output.argmax(dim=1, keepdim=True)
+        pred = y_pred.argmax(dim=1, keepdim=True)
         pred = pred.cpu().numpy()
         self.target_values = np.concatenate((self.target_values, y_true.numpy()))
         self.result_values = np.concatenate((self.result_values, pred[:, 0]))
