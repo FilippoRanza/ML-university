@@ -159,13 +159,13 @@ class AccuracyScore:
         self.count += pred.eq(y_true.view_as(pred)).sum().item()
 
 
-class BalancedAccuracyScore:
+class AbstractAccuracyScore:
     def __init__(self):
         self.target_values = np.zeros(0)
         self.result_values = np.zeros(0)
 
     def get_accuracy(self, _item_count):
-        return metrics.balanced_accuracy_score(self.target_values, self.result_values)
+        raise NotImplemented
 
     def add_score(self, y_true, y_pred):
         pred = y_pred.argmax(dim=1, keepdim=True)
@@ -173,6 +173,27 @@ class BalancedAccuracyScore:
         self.target_values = np.concatenate((self.target_values, y_true.numpy()))
         self.result_values = np.concatenate((self.result_values, pred[:, 0]))
 
+class BalancedAccuracyScore(AbstractAccuracyScore):
+    def __init__(self):
+        super(BalancedAccuracyScore, self).__init__()
+
+    def get_accuracy(self, _item_count):
+        return metrics.balanced_accuracy_score(self.target_values, self.result_values)
+
+
+
+class BalancedLossScore(AbstractAccuracyScore):
+    def __init__(self):
+        super(BalancedLossScore, self).__init__()
+
+    def get_accuracy(self, _item_count):
+        conf_mat = metrics.confusion_matrix(self.target_values, self.result_values)
+        output = np.zeros(len(conf_mat), dtype=np.float32)
+        for i, row in enumerate(conf_mat):
+            den = np.sum(row)
+            output[i] = 1 - (row[i] / den)
+        return np.sum(output)
+        
 
 class ComputeProportionaWeight:
     def __init__(self):
@@ -217,15 +238,30 @@ class Objective:
         return (trial, model)
 
     def automatic_weights(self):
-        best = self.get_best()
+        _, best = self.get_best()
+        if best:
+            output = self._compute_automatic_weights(best)
+        else: 
+            output = np.ones(CLASSES, dtype=np.float32)
+        
+        return torch.from_numpy(output).to(DEVICE)
+
+    def _compute_automatic_weights(self, best):
         y_true, y_pred = get_test_result(best)
         conf_mat = metrics.confusion_matrix(y_true, y_pred)
-        output = np.zeros(len(conf_mat))
+        output = np.zeros(len(conf_mat), dtype=np.float32)
         for i, row in enumerate(conf_mat):
             den = np.sum(row)
-            output[i] = 1 - (row[i] / den)
-        print(output)
-        return torch.from_numpy(output)
+            output[i] = 2 - (row[i] / den)
+        output *= 10
+
+        delta = (max(output) - min(output)) / min(output)
+        
+        if delta > .4:
+            i = np.argmax(output)
+            output[i] *= 2
+
+        return output
 
     def objective(self, trial):
 
@@ -252,7 +288,7 @@ class Objective:
 
         if self.weights:
             weight = trial.suggest_categorical(
-                "weights", [None, "inverse", "automatic"]
+                "weights", [None,  "automatic"]
             )
             if weight:
                 weight = {
@@ -282,10 +318,8 @@ class Objective:
 
             # Validation of the model.
             model.eval()
-            if BALANCED:
-                acc_score = BalancedAccuracyScore()
-            else:
-                acc_score = AccuracyScore()
+            acc_score = {"balanced": BalancedAccuracyScore, "default": AccuracyScore, "loss": BalancedLossScore}[BALANCED]
+            acc_score = acc_score()
 
             with torch.no_grad():
                 for batch_idx, (data, target) in enumerate(valid_loader):
@@ -307,8 +341,13 @@ class Objective:
 
 if __name__ == "__main__":
     discord.send_message("Start OPTUNA study")
+    if BALANCED == 'loss':
+        direction = "minimize"
+    else:
+        direction="maximize"
+
     study = optuna.create_study(
-        direction="maximize",
+        direction=direction,
         study_name=STUDY_NAME,
         storage=DB_FILE,
         load_if_exists=True,
