@@ -55,6 +55,7 @@ if __name__ == "__main__":
     DISCORD_URL = data.get("DISCORD_URL", None)
     STUDY_NAME = get_mandatory_config_param(data, "STUDY_NAME")
     BALANCED = data.get("BALANCED_ACCURACY", False)
+    WEIGHTS = data.get("WEIGHTS", False)
     discord = DiscordFrontEnd(DISCORD_URL)
 
 
@@ -196,8 +197,9 @@ class ComputeProportionaWeight:
 
 
 class Objective:
-    def __init__(self):
+    def __init__(self, weights):
         self.models = {}
+        self.weights = weights
 
     def get_best(self):
         trial = 0
@@ -233,9 +235,12 @@ class Objective:
 
         epochs = trial.suggest_int("n_epochs", MIN_EPOCHS, MAX_EPOCHS)
 
-        weight = trial.suggest_categorical("weights", [None, "inverse"])
-        if weight:
-            weight = proportional_weights
+        if self.weights:
+            weight = trial.suggest_categorical("weights", [None, "inverse"])
+            if weight:
+                weight = proportional_weights
+        else:
+            weight = None
 
         loss_function_name = trial.suggest_categorical(
             "loss function", ["nll_loss", "cross_entropy"]
@@ -289,7 +294,7 @@ if __name__ == "__main__":
         load_if_exists=True,
     )
 
-    obj = Objective()
+    obj = Objective(WEIGHTS)
     study.optimize(obj.objective, n_trials=N_TRIALS)
     discord.send_message(f"Done {N_TRIALS} trials")
 
