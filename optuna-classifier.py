@@ -155,6 +155,8 @@ class AccuracyScore:
         return self.count / item_count
 
     def add_score(self, y_true, y_pred):
+        y_true = y_true.to(DEVICE)
+        y_pred = y_pred.to(DEVICE)
         pred = y_pred.argmax(dim=1, keepdim=True)
         self.count += pred.eq(y_true.view_as(pred)).sum().item()
 
@@ -228,10 +230,18 @@ class Objective:
 
     def get_best(self):
         trial = 0
-        accuracy = 0
+        if BALANCED == 'loss': 
+            accuracy = CLASSES
+        else:
+            accuracy = 0
         model = None
         for k, (m, a) in self.models.items():
-            if a > accuracy:
+            if BALANCED == 'loss':
+                cond = a < accuracy
+            else: 
+                cond = a > accuracy
+         
+            if cond:
                 accuracy = a
                 trial = k
                 model = m
@@ -252,7 +262,7 @@ class Objective:
         output = np.zeros(len(conf_mat), dtype=np.float32)
         for i, row in enumerate(conf_mat):
             den = np.sum(row)
-            output[i] = 2 - (row[i] / den)
+            output[i] = 2 - (row[i] / den) 
         output *= 10
 
         delta = (max(output) - min(output)) / min(output)
